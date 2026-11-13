@@ -47,6 +47,7 @@
   .tm .inside{color:var(--in);font-weight:700;font-size:12px}
   .x{border:0;background:none;color:#a0a8b4;font-size:20px;padding:6px;cursor:pointer}
   .empty{text-align:center;color:var(--muted);padding:30px 10px}
+  #install{display:none;width:100%;border:0;background:#2a5bd7;color:#fff;font-size:16px;font-weight:700;padding:13px;cursor:pointer}
   footer{padding:10px 16px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px}
   footer button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:15px;font-weight:600;color:var(--text);cursor:pointer}
   footer .clr{color:var(--danger)}
@@ -57,6 +58,8 @@
   <div><div class="ttl">🚚 Учёт транспорта</div><div class="dt" id="dt"></div></div>
   <div id="clock">--:--</div>
 </header>
+
+<button id="install">📲 Установить приложение на телефон</button>
 
 <div class="panel">
   <input id="plate" placeholder="ГОСНОМЕР" autocomplete="off" autocapitalize="characters" list="dlPlates" enterkeyhint="done">
@@ -178,6 +181,22 @@ function tick(){
   $('dt').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 }
 tick();setInterval(tick,15000);render();
+
+let deferredPrompt=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if(!isStandalone())$('install').style.display='block';
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
+$('install').onclick=async()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const r=await deferredPrompt.userChoice;
+    deferredPrompt=null;
+    if(r.outcome==='accepted')toast('Приложение устанавливается…',true);
+  }else{
+    alert('Откройте меню браузера (⋮) и выберите «Установить приложение» или «Добавить на главный экран».\n\nЕсли такого пункта нет, откройте страницу в Chrome по ссылке https://, подождите несколько секунд и повторите.');
+  }
+};
+window.addEventListener('appinstalled',()=>{$('install').style.display='none';toast('Приложение установлено',true);});
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
