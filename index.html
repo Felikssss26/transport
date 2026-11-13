@@ -16,23 +16,34 @@
   :root{--bg:#eef1f5;--card:#fff;--text:#1c2430;--muted:#6b7686;--line:#e2e6ec;--in:#1f9d55;--out:#e0792a;--danger:#c93c3c}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
+  body{height:100dvh}
   body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);
     display:flex;flex-direction:column;max-width:640px;margin:0 auto;
     padding-bottom:env(safe-area-inset-bottom)}
-  header{background:#1c2430;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;justify-content:space-between;align-items:center}
+  header{position:relative;background:#1c2430;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 8px 10px 16px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+  .hr{display:flex;align-items:center;gap:4px}
+  #mBtn{border:0;background:none;color:#fff;font-size:26px;line-height:1;width:44px;height:44px;border-radius:22px;cursor:pointer;font-weight:700}
+  #mBtn:active{background:rgba(255,255,255,.15)}
+  .menu{display:none;position:absolute;right:8px;top:calc(100% - 4px);z-index:20;background:#fff;color:var(--text);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.28);min-width:240px;overflow:hidden}
+  .menu.open{display:block}
+  .menu button{display:block;width:100%;text-align:left;border:0;background:#fff;padding:15px 18px;font-size:16px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid var(--line)}
+  .menu button:last-child{border-bottom:0}
+  .menu button:active{background:var(--bg)}
+  .menu .clr{color:var(--danger)}
+  #install{display:none}
   header .ttl{font-weight:700;font-size:17px}
   header .dt{font-size:12px;opacity:.7}
   #clock{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-  .panel{background:var(--card);padding:14px 16px;border-bottom:1px solid var(--line)}
+  .panel{background:var(--card);padding:12px 16px 14px;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
   input{width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;font-size:18px;background:#fff;color:var(--text);outline:none}
   input:focus{border-color:#2a5bd7}
   #plate{font-size:26px;font-weight:800;letter-spacing:2px;text-transform:uppercase;text-align:center}
   #org{margin-top:10px}
-  .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-  .big{border:0;border-radius:16px;padding:26px 8px;font-size:24px;font-weight:800;color:#fff;cursor:pointer;letter-spacing:1px}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+  .big{border:0;border-radius:16px;padding:22px 8px;font-size:24px;font-weight:800;color:#fff;cursor:pointer;letter-spacing:1px}
   .big:active{transform:scale(.97);filter:brightness(.9)}
   #bIn{background:var(--in)} #bOut{background:var(--out)}
-  #toast{min-height:22px;margin-top:10px;font-size:15px;font-weight:600;text-align:center}
+  #toast{min-height:22px;margin-top:8px;font-size:15px;font-weight:600;text-align:center}
   .ok{color:var(--in)} .err{color:var(--danger)}
   .bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:14px;color:var(--muted)}
   .bar b{color:var(--text)}
@@ -47,19 +58,25 @@
   .tm .inside{color:var(--in);font-weight:700;font-size:12px}
   .x{border:0;background:none;color:#a0a8b4;font-size:20px;padding:6px;cursor:pointer}
   .empty{text-align:center;color:var(--muted);padding:30px 10px}
-  #install{display:none;width:100%;border:0;background:#2a5bd7;color:#fff;font-size:16px;font-weight:700;padding:13px;cursor:pointer}
-  footer{padding:10px 16px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px}
-  footer button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:15px;font-weight:600;color:var(--text);cursor:pointer}
-  footer .clr{color:var(--danger)}
 </style>
 </head>
 <body>
 <header>
   <div><div class="ttl">🚚 Учёт транспорта</div><div class="dt" id="dt"></div></div>
-  <div id="clock">--:--</div>
+  <div class="hr">
+    <div id="clock">--:--</div>
+    <button id="mBtn" aria-label="Меню">⋮</button>
+  </div>
+  <div class="menu" id="menu">
+    <button id="install">📲 Установить приложение</button>
+    <button id="bSave">⬇ Сохранить в Excel</button>
+    <button id="bClear" class="clr">🗑 Очистить день</button>
+  </div>
 </header>
 
-<button id="install">📲 Установить приложение на телефон</button>
+
+<div class="bar"><span>На территории: <b id="cNow">0</b></span><span>Записей: <b id="cAll">0</b></span></div>
+<div id="list"></div>
 
 <div class="panel">
   <input id="plate" placeholder="ГОСНОМЕР" autocomplete="off" autocapitalize="characters" list="dlPlates" enterkeyhint="done">
@@ -71,14 +88,6 @@
   </div>
   <div id="toast"></div>
 </div>
-
-<div class="bar"><span>На территории: <b id="cNow">0</b></span><span>Записей: <b id="cAll">0</b></span></div>
-<div id="list"></div>
-
-<footer>
-  <button id="bSave">⬇ Сохранить в файл</button>
-  <button id="bClear" class="clr">🗑 Очистить день</button>
-</footer>
 
 <script>
 const KEY='vehicle_log_app_v1';
@@ -100,24 +109,27 @@ function toast(t,ok){
 }
 const inside=p=>log.find(r=>r.plate===p&&!r.out);
 
-function reset(){$('plate').value='';$('org').value='';$('plate').focus();}
+function reset(){$('plate').value='';$('org').value='';if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();}
 
 $('bIn').onclick=()=>{
   const p=norm($('plate').value);
-  if(!p)return toast('Введите госномер'),$('plate').focus();
+  if(!p)return toast('Введите госномер');
   if(inside(p))return toast(p+' уже на территории');
   log.push({id:Date.now()+Math.random(),plate:p,org:$('org').value.trim(),in:Date.now(),out:null});
-  save();toast('ВЪЕЗД '+p+' — '+hm(Date.now()),true);reset();render();
+  save();toast('ВЪЕЗД '+p+' — '+hm(Date.now()),true);reset();render(true);
 };
 $('bOut').onclick=()=>{
   const p=norm($('plate').value);
-  if(!p)return toast('Введите госномер'),$('plate').focus();
+  if(!p)return toast('Введите госномер');
   const r=inside(p);
   if(!r)return toast(p+' не числится на территории');
   r.out=Date.now();
   const o=$('org').value.trim();if(o&&!r.org)r.org=o;
   save();toast('ВЫЕЗД '+p+' — '+hm(r.out),true);reset();render();
 };
+$('mBtn').onclick=e=>{e.stopPropagation();$('menu').classList.toggle('open');};
+document.addEventListener('click',e=>{if(!$('menu').contains(e.target))$('menu').classList.remove('open');});
+$('menu').addEventListener('click',()=>$('menu').classList.remove('open'));
 $('plate').addEventListener('input',()=>{
   const p=norm($('plate').value);
   const k=[...log].reverse().find(r=>r.plate===p&&r.org);
@@ -127,7 +139,7 @@ $('plate').addEventListener('keydown',e=>{if(e.key==='Enter')(inside(norm($('pla
 
 function pick(id){
   const r=log.find(x=>String(x.id)===String(id));if(!r)return;
-  $('plate').value=r.plate;$('org').value=r.org||'';window.scrollTo(0,0);
+  $('plate').value=r.plate;$('org').value=r.org||'';
 }
 function del(id,ev){
   ev.stopPropagation();
@@ -135,10 +147,10 @@ function del(id,ev){
   log=log.filter(r=>String(r.id)!==String(id));save();render();
 }
 
-function render(){
+function render(toEnd){
   const now=log.filter(r=>!r.out).length;
   $('cNow').textContent=now;$('cAll').textContent=log.length;
-  const items=[...log].sort((a,b)=>(b.out||b.in)-(a.out||a.in));
+  const items=[...log].sort((a,b)=>a.in-b.in);
   $('list').innerHTML=items.length?items.map(r=>`
     <div class="row ${r.out?'done':''}" onclick="pick('${r.id}')">
       <div class="main"><div class="pl">${esc(r.plate)}</div><div class="og">${esc(r.org)||'&nbsp;'}</div></div>
@@ -148,6 +160,7 @@ function render(){
       </div>
       <button class="x" onclick="del('${r.id}',event)">✕</button>
     </div>`).join(''):'<div class="empty">Пока нет записей</div>';
+  if(toEnd){const l=$('list');l.scrollTop=l.scrollHeight;}
   $('dlPlates').innerHTML=[...new Set(log.map(r=>r.plate))].map(v=>`<option value="${esc(v)}">`).join('');
   $('dlOrgs').innerHTML=[...new Set(log.map(r=>r.org).filter(Boolean))].map(v=>`<option value="${esc(v)}">`).join('');
 }
@@ -180,7 +193,8 @@ function tick(){
   $('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes());
   $('dt').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 }
-tick();setInterval(tick,15000);render();
+tick();setInterval(tick,15000);render(true);
+if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
 
 let deferredPrompt=null;
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
