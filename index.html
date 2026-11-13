@@ -55,6 +55,7 @@
   .og{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tm{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;line-height:1.4}
   .tm .i{color:var(--in);font-weight:700} .tm .o{color:var(--out);font-weight:700}
+  .tm .nn{color:#a0a8b4;font-weight:700}
   .tm .inside{color:var(--in);font-weight:700;font-size:12px}
   .x{border:0;background:none;color:#a0a8b4;font-size:20px;padding:6px;cursor:pointer}
   .empty{text-align:center;color:var(--muted);padding:30px 10px}
@@ -122,7 +123,10 @@ $('bOut').onclick=()=>{
   const p=norm($('plate').value);
   if(!p)return toast('Введите госномер');
   const r=inside(p);
-  if(!r)return toast(p+' не числится на территории');
+  if(!r){
+    log.push({id:Date.now()+Math.random(),plate:p,org:$('org').value.trim(),in:null,out:Date.now()});
+    save();toast('ВЫЕЗД '+p+' — '+hm(Date.now())+' (въезд не отмечен)',true);reset();render(true);return;
+  }
   r.out=Date.now();
   const o=$('org').value.trim();if(o&&!r.org)r.org=o;
   save();toast('ВЫЕЗД '+p+' — '+hm(r.out),true);reset();render();
@@ -150,12 +154,13 @@ function del(id,ev){
 function render(toEnd){
   const now=log.filter(r=>!r.out).length;
   $('cNow').textContent=now;$('cAll').textContent=log.length;
-  const items=[...log].sort((a,b)=>a.in-b.in);
+  const key=r=>r.in??r.out;
+  const items=[...log].sort((a,b)=>key(a)-key(b));
   $('list').innerHTML=items.length?items.map(r=>`
     <div class="row ${r.out?'done':''}" onclick="pick('${r.id}')">
       <div class="main"><div class="pl">${esc(r.plate)}</div><div class="og">${esc(r.org)||'&nbsp;'}</div></div>
       <div class="tm">
-        <div><span class="i">▶ ${hm(r.in)}</span>${sameDay(r.in,Date.now())?'':' <small>'+dm(r.in)+'</small>'}</div>
+        <div>${r.in?`<span class="i">▶ ${hm(r.in)}</span>${sameDay(r.in,Date.now())?'':' <small>'+dm(r.in)+'</small>'}`:'<span class="nn">▶ —</span>'}</div>
         <div>${r.out?'<span class="o">■ '+hm(r.out)+'</span>':'<span class="inside">на территории</span>'}</div>
       </div>
       <button class="x" onclick="del('${r.id}',event)">✕</button>
@@ -171,9 +176,10 @@ function download(name,text,type){
 }
 function exportCsv(){
   const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"';
-  const rows=[...log].sort((a,b)=>a.in-b.in);
+  const key=r=>r.in??r.out;
+  const rows=[...log].sort((a,b)=>key(a)-key(b));
   let csv='№;Госномер;Организация;Дата;Въезд;Выезд\r\n';
-  rows.forEach((r,i)=>{csv+=[i+1,q(r.plate),q(r.org),dm(r.in)+'.'+new Date(r.in).getFullYear(),hm(r.in),r.out?hm(r.out):''].join(';')+'\r\n';});
+  rows.forEach((r,i)=>{csv+=[i+1,q(r.plate),q(r.org),dm(r.in??r.out)+'.'+new Date(r.in??r.out).getFullYear(),r.in?hm(r.in):'',r.out?hm(r.out):''].join(';')+'\r\n';});
   const d=new Date();
   download('transport_'+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'.csv','\ufeff'+csv,'text/csv;charset=utf-8');
 }
