@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#1c2430">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,41 +13,43 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-  :root{--bg:#eef1f5;--card:#fff;--text:#1c2430;--muted:#6b7686;--line:#e2e6ec;--in:#1f9d55;--out:#e0792a;--danger:#c93c3c}
+  :root{--bg:#eef1f5;--card:#fff;--text:#1c2430;--muted:#6b7686;--line:#e2e6ec;--in:#1f9d55;--out:#e0792a;--danger:#c93c3c;--acc:#2a5bd7}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
-  body{height:100dvh}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);
-    display:flex;flex-direction:column;max-width:640px;margin:0 auto;
-    padding-bottom:env(safe-area-inset-bottom)}
-  header{position:relative;background:#1c2430;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 8px 10px 16px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+  body{margin:0 auto;height:100dvh;max-width:640px;display:flex;flex-direction:column;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding-bottom:env(safe-area-inset-bottom);-webkit-user-select:none;user-select:none}
+  input{-webkit-user-select:text;user-select:text}
+  button{font-family:inherit}
+
+  header{position:relative;background:#1c2430;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 8px 8px 16px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+  header .ttl{font-weight:700;font-size:17px}
+  header .dt{font-size:12px;opacity:.7}
   .hr{display:flex;align-items:center;gap:4px}
+  #clock{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
   #mBtn{border:0;background:none;color:#fff;font-size:26px;line-height:1;width:44px;height:44px;border-radius:22px;cursor:pointer;font-weight:700}
   #mBtn:active{background:rgba(255,255,255,.15)}
-  .menu{display:none;position:absolute;right:8px;top:calc(100% - 4px);z-index:20;background:#fff;color:var(--text);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.28);min-width:240px;overflow:hidden}
+  .menu{display:none;position:absolute;right:8px;top:calc(100% - 4px);z-index:20;background:#fff;color:var(--text);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.28);min-width:260px;overflow:hidden}
   .menu.open{display:block}
   .menu button{display:block;width:100%;text-align:left;border:0;background:#fff;padding:15px 18px;font-size:16px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid var(--line)}
   .menu button:last-child{border-bottom:0}
   .menu button:active{background:var(--bg)}
   .menu .clr{color:var(--danger)}
   #install{display:none}
-  header .ttl{font-weight:700;font-size:17px}
-  header .dt{font-size:12px;opacity:.7}
-  #clock{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-  .panel{background:var(--card);padding:12px 16px 14px;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
-  input{width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;font-size:18px;background:#fff;color:var(--text);outline:none}
-  input:focus{border-color:#2a5bd7}
-  #plate{font-size:26px;font-weight:800;letter-spacing:2px;text-transform:uppercase;text-align:center}
-  #org{margin-top:10px}
-  .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
-  .big{border:0;border-radius:16px;padding:22px 8px;font-size:24px;font-weight:800;color:#fff;cursor:pointer;letter-spacing:1px}
-  .big:active{transform:scale(.97);filter:brightness(.9)}
-  #bIn{background:var(--in)} #bOut{background:var(--out)}
-  #toast{min-height:22px;margin-top:8px;font-size:15px;font-weight:600;text-align:center}
-  .ok{color:var(--in)} .err{color:var(--danger)}
-  .bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:14px;color:var(--muted)}
+
+  .tabs{display:flex;background:#1c2430;padding:0 8px}
+  .tab{flex:1;border:0;background:none;color:#9aa5b5;font-size:15px;font-weight:700;padding:9px 6px 10px;border-bottom:3px solid transparent;cursor:pointer}
+  .tab.on{color:#fff;border-bottom-color:#4f8cff}
+
+  .view{display:none;flex:1;min-height:0;flex-direction:column}
+  .view.on{display:flex}
+  .bar{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;font-size:14px;color:var(--muted)}
   .bar b{color:var(--text)}
-  #list{flex:1;overflow-y:auto;padding:0 12px 12px}
+
+  input.txt{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:12px;font-size:17px;background:#fff;color:var(--text);outline:none}
+  input.txt:focus{border-color:var(--acc)}
+  input.plate{font-size:26px;font-weight:800;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:8px 14px;caret-color:transparent}
+
+  /* журнал */
+  #list{flex:1;min-height:0;overflow-y:auto;padding:0 12px 12px}
   .row{background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border-left:6px solid var(--in)}
   .row.done{border-left-color:#b8c0cc}
   .row .main{flex:1;min-width:0}
@@ -58,7 +60,63 @@
   .tm .nn{color:#a0a8b4;font-weight:700}
   .tm .inside{color:var(--in);font-weight:700;font-size:12px}
   .x{border:0;background:none;color:#a0a8b4;font-size:20px;padding:6px;cursor:pointer}
-  .empty{text-align:center;color:var(--muted);padding:30px 10px}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;line-height:1.5}
+
+  .panel{background:var(--card);padding:10px 14px 12px;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+  #org{margin-top:8px}
+  #org::placeholder{font-size:14px}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+  .big{border:0;border-radius:16px;padding:20px 8px;font-size:24px;font-weight:800;color:#fff;cursor:pointer;letter-spacing:1px}
+  .big:active{transform:scale(.97);filter:brightness(.9)}
+  #bIn{background:var(--in)} #bOut{background:var(--out)}
+
+  /* экранная клавиатура */
+  .kp{display:grid;gap:6px;margin-top:8px}
+  .kp.n{grid-template-columns:repeat(5,1fr)}
+  .kp.l{grid-template-columns:repeat(9,1fr)}
+  .kp button{border:0;border-radius:10px;background:#e8ecf2;color:var(--text);font-size:22px;font-weight:700;height:46px;cursor:pointer;touch-action:manipulation;padding:0}
+  .kp.l button{font-size:17px;height:42px}
+  .kp button:active{background:#c5cedb}
+  .kp .fn{background:#d3dae5;font-size:15px}
+  .kp .s2{grid-column:span 2}
+  .kp .s3{grid-column:span 3}
+  .typing .kp{display:none}
+
+  /* автопарк */
+  .fq{display:flex;gap:8px;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+  .fq input{flex:1;min-width:0}
+  .fq button{border:0;border-radius:12px;background:var(--acc);color:#fff;font-weight:700;font-size:16px;padding:0 16px;cursor:pointer;white-space:nowrap}
+  #fleet{flex:1;min-height:0;overflow-y:auto;padding:0 12px 12px}
+  .car{background:var(--card);border-radius:12px;padding:10px 8px 10px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border:2px solid transparent;cursor:pointer}
+  .car.sel{border-color:var(--acc);background:#f3f7ff}
+  .chk{width:28px;height:28px;border-radius:8px;border:2px solid #b8c0cc;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;flex:none;background:#fff}
+  .car.sel .chk{background:var(--acc);border-color:var(--acc)}
+  .car .main{flex:1;min-width:0}
+  .car .sub{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{display:inline-block;vertical-align:middle;margin-left:6px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:0;background:#e3f5ea;color:var(--in)}
+  .edit{border:0;background:#eef1f5;border-radius:10px;width:42px;height:42px;font-size:18px;cursor:pointer;flex:none}
+  .acts{display:none;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+  .acts.on{display:flex}
+  .acts .a{flex:1;border:0;border-radius:12px;padding:15px 6px;font-size:17px;font-weight:800;color:#fff;cursor:pointer}
+  .acts .a:disabled{opacity:.3}
+  .acts #aIn{background:var(--in)} .acts #aOut{background:var(--out)}
+  .acts #aClr{flex:none;width:52px;background:#e8ecf2;color:var(--text);font-size:18px}
+
+  /* окно правки */
+  #modal{display:none;position:fixed;inset:0;z-index:40;background:var(--bg);flex-direction:column;max-width:640px;margin:0 auto}
+  #modal.on{display:flex}
+  #modal .mh{background:#1c2430;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 8px 10px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:17px}
+  #modal .mh button{border:0;background:none;color:#fff;font-size:22px;width:44px;height:40px;cursor:pointer}
+  #modal .mb{flex:1;min-height:0;overflow-y:auto;padding:6px 14px 14px}
+  .lbl{font-size:12px;color:var(--muted);margin:12px 0 4px;font-weight:600}
+  #modal .mf{display:flex;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+  #modal .mf button{flex:1;border:0;border-radius:12px;padding:15px 6px;font-size:17px;font-weight:800;cursor:pointer}
+  #mSave{background:var(--acc);color:#fff}
+  #mDel{background:#fff;color:var(--danger);border:1px solid var(--line)!important;flex:none!important;padding:15px 18px!important}
+
+  #toast{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 112px);z-index:60;pointer-events:none;text-align:center}
+  #toast span{display:inline-block;max-width:100%;padding:10px 16px;border-radius:12px;font-size:15px;font-weight:700;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .t-ok{background:var(--in)} .t-err{background:var(--danger)}
 </style>
 </head>
 <body>
@@ -70,138 +128,336 @@
   </div>
   <div class="menu" id="menu">
     <button id="install">📲 Установить приложение</button>
-    <button id="bSave">⬇ Сохранить в Excel</button>
+    <button id="bSave">⬇ Сохранить журнал в Excel</button>
+    <button id="bFSave">💾 Сохранить базу авто в файл</button>
+    <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
   </div>
 </header>
-
-
-<div class="bar"><span>На территории: <b id="cNow">0</b></span><span>Записей: <b id="cAll">0</b></span></div>
-<div id="list"></div>
-
-<div class="panel">
-  <input id="plate" placeholder="ГОСНОМЕР" autocomplete="off" autocapitalize="characters" list="dlPlates" enterkeyhint="done">
-  <input id="org" placeholder="Организация (необязательно)" autocomplete="off" list="dlOrgs">
-  <datalist id="dlPlates"></datalist><datalist id="dlOrgs"></datalist>
-  <div class="btns">
-    <button class="big" id="bIn">ВЪЕЗД</button>
-    <button class="big" id="bOut">ВЫЕЗД</button>
-  </div>
-  <div id="toast"></div>
+<div class="tabs">
+  <button class="tab on" id="tLog">Журнал</button>
+  <button class="tab" id="tFleet">Автопарк</button>
 </div>
 
+<div class="view on" id="vLog">
+  <div class="bar"><span>На территории: <b id="cNow">0</b></span><span>Записей: <b id="cAll">0</b></span></div>
+  <div id="list"></div>
+  <div class="panel">
+    <input id="plate" class="txt plate" readonly inputmode="none" placeholder="ГОСНОМЕР" autocomplete="off">
+    <div class="kp" id="kpMain"></div>
+    <input id="org" class="txt" data-t placeholder="Водитель/организация (необязательно)" autocomplete="off" list="dlOrgs" enterkeyhint="done">
+    <datalist id="dlOrgs"></datalist>
+    <div class="btns">
+      <button class="big" id="bIn">ВЪЕЗД</button>
+      <button class="big" id="bOut">ВЫЕЗД</button>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="vFleet">
+  <div class="fq">
+    <input id="fq" class="txt" data-t placeholder="Поиск: номер, марка, водитель" autocomplete="off">
+    <button id="fAdd">＋ Авто</button>
+  </div>
+  <div class="bar"><span>Всего авто: <b id="fCnt">0</b></span><span>На территории: <b id="fIn">0</b></span></div>
+  <div id="fleet"></div>
+  <div class="acts" id="acts">
+    <button class="a" id="aIn">ВЪЕЗД</button>
+    <button class="a" id="aOut">ВЫЕЗД</button>
+    <button class="a" id="aClr" aria-label="Снять выбор">✕</button>
+  </div>
+</div>
+
+<div id="modal">
+  <div class="mh"><span id="mTitle">Автомобиль</span><button id="mClose" aria-label="Закрыть">✕</button></div>
+  <div class="mb">
+    <div class="lbl">Госномер *</div>
+    <input id="fPlate" class="txt plate" readonly inputmode="none" placeholder="ГОСНОМЕР" autocomplete="off">
+    <div class="kp" id="kpFleet"></div>
+    <div class="lbl">Марка / модель</div>
+    <input id="fBrand" class="txt" data-t autocomplete="off">
+    <div class="lbl">Водитель (ФИО)</div>
+    <input id="fDriver" class="txt" data-t autocomplete="off">
+    <div class="lbl">Организация</div>
+    <input id="fOrg" class="txt" data-t autocomplete="off">
+  </div>
+  <div class="mf">
+    <button id="mDel">Удалить</button>
+    <button id="mSave">Сохранить</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="file" accept=".json,application/json" style="display:none">
+
 <script>
-const KEY='vehicle_log_app_v1';
-let log=[];
-try{log=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){log=[]}
 const $=id=>document.getElementById(id);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(log))}catch(e){}};
+const LSK_LOG='vehicle_log_app_v1', LSK_FLEET='vehicle_fleet_v1';
+function load(k){try{const v=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
+let log=load(LSK_LOG), fleet=load(LSK_FLEET);
+const saveLog=()=>{try{localStorage.setItem(LSK_LOG,JSON.stringify(log))}catch(e){}};
+const saveFleet=()=>{try{localStorage.setItem(LSK_FLEET,JSON.stringify(fleet))}catch(e){}};
+
 const pad=n=>String(n).padStart(2,'0');
 const hm=ts=>{const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())};
 const dm=ts=>{const d=new Date(ts);return pad(d.getDate())+'.'+pad(d.getMonth()+1)};
 const sameDay=(a,b)=>new Date(a).toDateString()===new Date(b).toDateString();
-const norm=s=>s.toUpperCase().replace(/\s+/g,'');
+const LOOK={'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','Х':'X','У':'Y'};
+const norm=s=>String(s||'').toUpperCase().replace(/\s+/g,'').replace(/[АВЕКМНОРСТХУ]/g,c=>LOOK[c]);
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const newId=()=>'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const vib=n=>{if(navigator.vibrate)navigator.vibrate(n)};
+const blurActive=()=>{const a=document.activeElement;if(a&&a.blur)a.blur();};
+
 let tt;
 function toast(t,ok){
-  const e=$('toast');e.textContent=t;e.className=ok?'ok':'err';
-  clearTimeout(tt);tt=setTimeout(()=>e.textContent='',4000);
-  if(navigator.vibrate)navigator.vibrate(ok?40:[80,60,80]);
+  const e=$('toast');e.innerHTML='<span class="'+(ok?'t-ok':'t-err')+'">'+esc(t)+'</span>';
+  clearTimeout(tt);tt=setTimeout(()=>e.innerHTML='',3500);
+  vib(ok?40:[80,60,80]);
 }
-const inside=p=>log.find(r=>r.plate===p&&!r.out);
 
-function reset(){$('plate').value='';$('org').value='';if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();}
+/* ---------- экранная клавиатура ---------- */
+const LAT='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const CYR='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЭЮЯ'.split('');
+function keypad(box,input,onChange){
+  let mode='n';
+  const ch=c=>{if(input.value.length<12){input.value+=c;if(onChange)onChange();}vib(10);};
+  const back=()=>{input.value=input.value.slice(0,-1);if(onChange)onChange();vib(10);};
+  const clr=()=>{input.value='';if(onChange)onChange();vib(10);};
+  function draw(){
+    box.className='kp '+(mode==='n'?'n':'l');
+    box.innerHTML='';
+    const add=(txt,fn,cls)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;if(cls)b.className=cls;b.addEventListener('click',fn);box.appendChild(b);};
+    if(mode==='n'){
+      '1234567890'.split('').forEach(d=>add(d,()=>ch(d)));
+      add('АБВ',()=>{mode='lat';draw();},'fn');
+      add('⌫',back,'fn s2');
+      add('Сброс',clr,'fn s2');
+    }else{
+      (mode==='lat'?LAT:CYR).forEach(c=>add(c,()=>ch(c)));
+      add('123',()=>{mode='n';draw();},'fn s2');
+      add(mode==='lat'?'РУС':'LAT',()=>{mode=mode==='lat'?'cyr':'lat';draw();},'fn s2');
+      add('⌫',back,'fn s2');
+      add('Сброс',clr,'fn s3');
+    }
+  }
+  draw();
+  return {reset(){mode='n';draw();}};
+}
+
+/* системная клавиатура — только в полях с data-t */
+const isT=e=>e&&e.dataset&&('t' in e.dataset);
+document.addEventListener('focusin',e=>{if(isT(e.target))document.body.classList.add('typing');});
+document.addEventListener('focusout',e=>{if(isT(e.target))document.body.classList.remove('typing');});
+document.addEventListener('pointerdown',e=>{
+  if(e.target.closest&&e.target.closest('.plate')){const a=document.activeElement;if(isT(a))a.blur();}
+});
+
+/* ---------- журнал ---------- */
+const inside=p=>log.find(r=>!r.out&&norm(r.plate)===p);
+const fleetBy=p=>fleet.find(v=>norm(v.plate)===p);
+const compose=v=>[v.driver,v.org].filter(Boolean).join(', ');
+let lastAuto='';
+function autofill(){
+  const p=norm($('plate').value);
+  let cand='';
+  if(p){
+    const v=fleetBy(p);
+    if(v)cand=compose(v);
+    else{const k=[...log].reverse().find(r=>norm(r.plate)===p&&r.org);if(k)cand=k.org;}
+  }
+  const o=$('org');
+  if(!o.value||o.value===lastAuto){o.value=cand;lastAuto=cand;}
+}
+const kpMain=keypad($('kpMain'),$('plate'),autofill);
+function resetForm(){$('plate').value='';$('org').value='';lastAuto='';kpMain.reset();blurActive();}
+const addIn=(p,org,brand,t)=>log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:brand||'',in:t,out:null});
 
 $('bIn').onclick=()=>{
   const p=norm($('plate').value);
   if(!p)return toast('Введите госномер');
   if(inside(p))return toast(p+' уже на территории');
-  log.push({id:Date.now()+Math.random(),plate:p,org:$('org').value.trim(),in:Date.now(),out:null});
-  save();toast('ВЪЕЗД '+p+' — '+hm(Date.now()),true);reset();render(true);
+  const v=fleetBy(p), t=Date.now();
+  addIn(p,$('org').value.trim()||(v?compose(v):''),v?v.brand:'',t);
+  saveLog();toast('ВЪЕЗД '+p+' — '+hm(t),true);resetForm();renderLog(true);renderFleet();
 };
 $('bOut').onclick=()=>{
   const p=norm($('plate').value);
   if(!p)return toast('Введите госномер');
+  const v=fleetBy(p), t=Date.now(), org=$('org').value.trim()||(v?compose(v):'');
   const r=inside(p);
   if(!r){
-    log.push({id:Date.now()+Math.random(),plate:p,org:$('org').value.trim(),in:null,out:Date.now()});
-    save();toast('ВЫЕЗД '+p+' — '+hm(Date.now())+' (въезд не отмечен)',true);reset();render(true);return;
+    log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:v?v.brand||'':'',in:null,out:t});
+    saveLog();toast('ВЫЕЗД '+p+' — '+hm(t)+' (въезд не отмечен)',true);resetForm();renderLog(true);renderFleet();return;
   }
-  r.out=Date.now();
-  const o=$('org').value.trim();if(o&&!r.org)r.org=o;
-  save();toast('ВЫЕЗД '+p+' — '+hm(r.out),true);reset();render();
+  r.out=t;if(org&&!r.org)r.org=org;
+  saveLog();toast('ВЫЕЗД '+p+' — '+hm(t),true);resetForm();renderLog();renderFleet();
 };
-$('mBtn').onclick=e=>{e.stopPropagation();$('menu').classList.toggle('open');};
-document.addEventListener('click',e=>{if(!$('menu').contains(e.target))$('menu').classList.remove('open');});
-$('menu').addEventListener('click',()=>$('menu').classList.remove('open'));
-$('plate').addEventListener('input',()=>{
-  const p=norm($('plate').value);
-  const k=[...log].reverse().find(r=>r.plate===p&&r.org);
-  if(k&&!$('org').value)$('org').value=k.org;
-});
-$('plate').addEventListener('keydown',e=>{if(e.key==='Enter')(inside(norm($('plate').value))?$('bOut'):$('bIn')).click();});
+$('org').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
 
 function pick(id){
   const r=log.find(x=>String(x.id)===String(id));if(!r)return;
-  $('plate').value=r.plate;$('org').value=r.org||'';
+  $('plate').value=r.plate;$('org').value=r.org||'';lastAuto=r.org||'';
 }
 function del(id,ev){
   ev.stopPropagation();
   if(!confirm('Удалить эту запись?'))return;
-  log=log.filter(r=>String(r.id)!==String(id));save();render();
+  log=log.filter(r=>String(r.id)!==String(id));saveLog();renderLog();renderFleet();
 }
-
-function render(toEnd){
-  const now=log.filter(r=>!r.out).length;
-  $('cNow').textContent=now;$('cAll').textContent=log.length;
-  const key=r=>r.in??r.out;
-  const items=[...log].sort((a,b)=>key(a)-key(b));
+const tkey=r=>r.in??r.out;
+function renderLog(toEnd){
+  $('cNow').textContent=log.filter(r=>!r.out).length;$('cAll').textContent=log.length;
+  const items=[...log].sort((a,b)=>tkey(a)-tkey(b));
   $('list').innerHTML=items.length?items.map(r=>`
     <div class="row ${r.out?'done':''}" onclick="pick('${r.id}')">
-      <div class="main"><div class="pl">${esc(r.plate)}</div><div class="og">${esc(r.org)||'&nbsp;'}</div></div>
+      <div class="main"><div class="pl">${esc(r.plate)}</div><div class="og">${esc([r.brand,r.org].filter(Boolean).join(' · '))||'&nbsp;'}</div></div>
       <div class="tm">
         <div>${r.in?`<span class="i">▶ ${hm(r.in)}</span>${sameDay(r.in,Date.now())?'':' <small>'+dm(r.in)+'</small>'}`:'<span class="nn">▶ —</span>'}</div>
         <div>${r.out?'<span class="o">■ '+hm(r.out)+'</span>':'<span class="inside">на территории</span>'}</div>
       </div>
       <button class="x" onclick="del('${r.id}',event)">✕</button>
     </div>`).join(''):'<div class="empty">Пока нет записей</div>';
+  const orgs=[...new Set([...log.map(r=>r.org),...fleet.map(compose)].filter(Boolean))];
+  $('dlOrgs').innerHTML=orgs.map(v=>`<option value="${esc(v)}">`).join('');
   if(toEnd){const l=$('list');l.scrollTop=l.scrollHeight;}
-  $('dlPlates').innerHTML=[...new Set(log.map(r=>r.plate))].map(v=>`<option value="${esc(v)}">`).join('');
-  $('dlOrgs').innerHTML=[...new Set(log.map(r=>r.org).filter(Boolean))].map(v=>`<option value="${esc(v)}">`).join('');
 }
 
+/* ---------- автопарк ---------- */
+const sel=new Set();
+let fquery='';
+function togSel(id){if(sel.has(id))sel.delete(id);else sel.add(id);renderFleet();}
+function renderFleet(){
+  const q=fquery.trim().toLowerCase(), qn=norm(fquery);
+  const items=fleet.filter(v=>!q||[v.plate,v.brand,v.driver,v.org].join(' ').toLowerCase().includes(q)||(qn&&norm(v.plate).includes(qn)))
+    .sort((a,b)=>norm(a.plate).localeCompare(norm(b.plate)));
+  $('fCnt').textContent=fleet.length;
+  $('fIn').textContent=fleet.filter(v=>inside(norm(v.plate))).length;
+  $('fleet').innerHTML=items.length?items.map(v=>{
+    const on=!!inside(norm(v.plate)), s=sel.has(v.id);
+    return `<div class="car ${s?'sel':''}" onclick="togSel('${v.id}')">
+      <div class="chk">${s?'✓':''}</div>
+      <div class="main"><div class="pl">${esc(v.plate)}${on?'<span class="badge">на территории</span>':''}</div>
+      <div class="sub">${esc([v.brand,v.driver,v.org].filter(Boolean).join(' · '))||'&nbsp;'}</div></div>
+      <button class="edit" onclick="editCar('${v.id}',event)" aria-label="Править">✎</button>
+    </div>`;}).join(''):(fleet.length?'<div class="empty">Ничего не найдено</div>':'<div class="empty">База пуста.<br>Нажмите «＋ Авто», чтобы добавить автомобиль.</div>');
+  let a=0,b=0;
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v){sel.delete(id);return;}inside(norm(v.plate))?b++:a++;});
+  $('acts').classList.toggle('on',sel.size>0);
+  $('aIn').textContent='ВЪЕЗД ('+a+')';$('aIn').disabled=!a;
+  $('aOut').textContent='ВЫЕЗД ('+b+')';$('aOut').disabled=!b;
+}
+$('fq').addEventListener('input',e=>{fquery=e.target.value;renderFleet();});
+$('fq').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
+$('aIn').onclick=()=>{
+  const t=Date.now();let n=0;
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const p=norm(v.plate);if(inside(p))return;addIn(p,compose(v),v.brand,t);n++;});
+  sel.clear();saveLog();renderLog(true);renderFleet();toast('Въезд: '+n+' авто, '+hm(t),true);
+};
+$('aOut').onclick=()=>{
+  const t=Date.now();let n=0;
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const r=inside(norm(v.plate));if(!r)return;r.out=t;n++;});
+  sel.clear();saveLog();renderLog();renderFleet();toast('Выезд: '+n+' авто, '+hm(t),true);
+};
+$('aClr').onclick=()=>{sel.clear();renderFleet();};
+
+/* окно добавления / правки */
+let editId=null;
+const kpFleet=keypad($('kpFleet'),$('fPlate'));
+function openModal(id){
+  editId=id;const v=id?fleet.find(x=>x.id===id):null;
+  $('mTitle').textContent=v?'Редактирование':'Новый автомобиль';
+  $('fPlate').value=v?v.plate:'';$('fBrand').value=v?v.brand||'':'';
+  $('fDriver').value=v?v.driver||'':'';$('fOrg').value=v?v.org||'':'';
+  $('mDel').style.display=v?'block':'none';
+  kpFleet.reset();$('modal').classList.add('on');$('modal').querySelector('.mb').scrollTop=0;
+}
+function closeModal(){$('modal').classList.remove('on');document.body.classList.remove('typing');blurActive();editId=null;}
+function editCar(id,ev){ev.stopPropagation();openModal(id);}
+$('fAdd').onclick=()=>openModal(null);
+$('mClose').onclick=closeModal;
+$('mSave').onclick=()=>{
+  const p=norm($('fPlate').value);
+  if(!p)return toast('Введите госномер');
+  if(fleet.some(v=>v.id!==editId&&norm(v.plate)===p))return toast('Автомобиль '+p+' уже есть в базе');
+  const data={plate:p,brand:$('fBrand').value.trim(),driver:$('fDriver').value.trim(),org:$('fOrg').value.trim()};
+  if(editId){
+    const v=fleet.find(x=>x.id===editId);
+    if(v){
+      const old=norm(v.plate);Object.assign(v,data);
+      if(old!==p){log.forEach(r=>{if(!r.out&&norm(r.plate)===old)r.plate=p;});saveLog();}
+    }
+  }else fleet.push(Object.assign({id:newId()},data));
+  saveFleet();closeModal();renderFleet();renderLog();toast('Сохранено',true);
+};
+$('mDel').onclick=()=>{
+  const v=fleet.find(x=>x.id===editId);if(!v)return;
+  if(!confirm('Удалить автомобиль '+v.plate+' из базы?\nЗаписи журнала не изменятся.'))return;
+  fleet=fleet.filter(x=>x.id!==editId);sel.delete(editId);saveFleet();closeModal();renderFleet();toast('Удалено',true);
+};
+
+/* резервная копия базы */
 function download(name,text,type){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;
   document.body.appendChild(a);a.click();a.remove();
 }
-function exportCsv(){
-  const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"';
-  const key=r=>r.in??r.out;
-  const rows=[...log].sort((a,b)=>key(a)-key(b));
-  let csv='№;Госномер;Организация;Дата;Въезд;Выезд\r\n';
-  rows.forEach((r,i)=>{csv+=[i+1,q(r.plate),q(r.org),dm(r.in??r.out)+'.'+new Date(r.in??r.out).getFullYear(),r.in?hm(r.in):'',r.out?hm(r.out):''].join(';')+'\r\n';});
-  const d=new Date();
-  download('transport_'+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'.csv','\ufeff'+csv,'text/csv;charset=utf-8');
-}
-$('bSave').onclick=()=>{if(!log.length)return toast('Список пуст');exportCsv();};
-$('bClear').onclick=()=>{
-  if(!log.length)return toast('Список уже пуст');
-  const left=log.filter(r=>!r.out).length;
-  let msg='Очистить весь список ('+log.length+' записей)?';
-  if(left)msg+='\n\nВнимание: на территории ещё '+left+' машин(ы) без отметки выезда.';
-  msg+='\n\nЭто нельзя отменить. Сначала можно нажать «Сохранить в файл».';
-  if(!confirm(msg))return;
-  log=[];save();render();toast('День очищен',true);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+$('bFSave').onclick=()=>{
+  if(!fleet.length)return toast('База авто пуста');
+  download('avtopark_'+today()+'.json',JSON.stringify(fleet,null,1),'application/json');
+};
+$('bFLoad').onclick=()=>$('file').click();
+$('file').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const data=JSON.parse(rd.result);
+      if(!Array.isArray(data))throw 0;
+      const list=data.filter(x=>x&&norm(x.plate));
+      if(!list.length)throw 0;
+      if(!confirm('Добавить или обновить авто из файла: '+list.length+' шт.?\nАвто с совпадающим номером будут обновлены.'))return;
+      list.forEach(x=>{
+        const p=norm(x.plate),d={plate:p,brand:String(x.brand||'').trim(),driver:String(x.driver||'').trim(),org:String(x.org||'').trim()};
+        const ex=fleetBy(p);if(ex)Object.assign(ex,d);else fleet.push(Object.assign({id:newId()},d));
+      });
+      saveFleet();renderFleet();renderLog();toast('База загружена',true);
+    }catch(_){toast('Не удалось прочитать файл базы');}
+  };
+  rd.readAsText(f);e.target.value='';
 };
 
-function tick(){
-  const d=new Date();
-  $('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes());
-  $('dt').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+/* экспорт журнала */
+function exportCsv(){
+  const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"';
+  const rows=[...log].sort((a,b)=>tkey(a)-tkey(b));
+  let csv='№;Госномер;Марка;Водитель/организация;Дата;Въезд;Выезд\r\n';
+  rows.forEach((r,i)=>{const t0=tkey(r);csv+=[i+1,q(r.plate),q(r.brand),q(r.org),dm(t0)+'.'+new Date(t0).getFullYear(),r.in?hm(r.in):'',r.out?hm(r.out):''].join(';')+'\r\n';});
+  download('transport_'+today()+'.csv','﻿'+csv,'text/csv;charset=utf-8');
 }
-tick();setInterval(tick,15000);render(true);
-if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+$('bSave').onclick=()=>{if(!log.length)return toast('Журнал пуст');exportCsv();};
+$('bClear').onclick=()=>{
+  if(!log.length)return toast('Журнал уже пуст');
+  const left=log.filter(r=>!r.out).length;
+  let msg='Очистить журнал за день ('+log.length+' записей)?\nБаза автомобилей останется.';
+  if(left)msg+='\n\nВнимание: на территории ещё '+left+' машин(ы) без отметки выезда.';
+  msg+='\n\nЭто нельзя отменить. Сначала можно сохранить журнал в Excel.';
+  if(!confirm(msg))return;
+  log=[];saveLog();renderLog();renderFleet();toast('День очищен',true);
+};
 
+/* вкладки и меню */
+function show(v){
+  $('vLog').classList.toggle('on',v==='log');$('vFleet').classList.toggle('on',v==='fleet');
+  $('tLog').classList.toggle('on',v==='log');$('tFleet').classList.toggle('on',v==='fleet');
+  blurActive();
+  if(v==='log')renderLog(true);else renderFleet();
+}
+$('tLog').onclick=()=>show('log');$('tFleet').onclick=()=>show('fleet');
+$('mBtn').onclick=e=>{e.stopPropagation();$('menu').classList.toggle('open');};
+document.addEventListener('click',e=>{if(!$('menu').contains(e.target))$('menu').classList.remove('open');});
+$('menu').addEventListener('click',()=>$('menu').classList.remove('open'));
+
+/* установка как приложения */
 let deferredPrompt=null;
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 if(!isStandalone())$('install').style.display='block';
@@ -213,10 +469,17 @@ $('install').onclick=async()=>{
     deferredPrompt=null;
     if(r.outcome==='accepted')toast('Приложение устанавливается…',true);
   }else{
-    alert('Откройте меню браузера (⋮) и выберите «Установить приложение» или «Добавить на главный экран».\n\nВажно: нужен именно пункт «Установить приложение», а не «Добавить ярлык» — иначе откроется в браузере. Старый ярлык с главного экрана сначала удалите.');
+    alert('Откройте меню браузера (⋮) и выберите «Установить приложение».\n\nВажно: нужен именно пункт «Установить приложение», а не «Добавить ярлык» — иначе откроется в браузере. Старый ярлык с главного экрана сначала удалите.');
   }
 };
 window.addEventListener('appinstalled',()=>{$('install').style.display='none';toast('Приложение установлено',true);});
+
+function tick(){
+  const d=new Date();
+  $('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes());
+  $('dt').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+}
+tick();setInterval(tick,15000);renderLog(true);renderFleet();blurActive();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
