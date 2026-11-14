@@ -271,7 +271,7 @@ function autofill(){
 }
 const kpMain=keypad($('kpMain'),$('plate'),autofill);
 function resetForm(){$('plate').value='';$('org').value='';lastAuto='';kpMain.reset();blurActive();}
-const addIn=(p,org,brand,t)=>log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:brand||'',in:t,out:null});
+const addIn=(p,org,brand,t,noTime)=>log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:brand||'',in:noTime?null:t,out:null,added:t});
 
 $('bIn').onclick=()=>{
   const p=norm($('plate').value);
@@ -304,7 +304,7 @@ function del(id,ev){
   if(!confirm('Удалить эту запись?'))return;
   log=log.filter(r=>String(r.id)!==String(id));saveLog();renderLog();renderFleet();
 }
-const tkey=r=>r.in??r.out;
+const tkey=r=>r.in??r.added??r.out;
 function renderLog(toEnd){
   $('cNow').textContent=log.filter(r=>!r.out).length;$('cAll').textContent=log.length;
   const items=[...log].sort((a,b)=>tkey(a)-tkey(b));
@@ -350,8 +350,8 @@ $('fq').addEventListener('input',e=>{fquery=e.target.value;renderFleet();});
 $('fq').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
 $('aIn').onclick=()=>{
   const t=Date.now();let n=0;
-  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const p=norm(v.plate);if(inside(p))return;addIn(p,compose(v),v.brand,t);n++;});
-  sel.clear();saveLog();renderLog(true);renderFleet();toast('Въезд: '+n+' авто, '+hm(t),true);
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const p=norm(v.plate);if(inside(p))return;addIn(p,compose(v),v.brand,t,true);n++;});
+  sel.clear();saveLog();renderLog(true);renderFleet();toast('Перенесено на территорию: '+n+' авто (без времени въезда)',true);
 };
 $('aOut').onclick=()=>{
   const t=Date.now();let n=0;
