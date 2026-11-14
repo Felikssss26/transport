@@ -51,7 +51,7 @@
 
   /* журнал */
   #list{flex:1;min-height:0;overflow-y:auto;padding:0 12px 12px}
-  .row{background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border-left:6px solid var(--in)}
+  .row{background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border:1px solid var(--bc,transparent);border-left:6px solid var(--in)}
   .row.done{border-left-color:#b8c0cc}
   .row .main{flex:1;min-width:0}
   .pl{font-size:20px;font-weight:800;letter-spacing:1px}
@@ -110,8 +110,8 @@
   .fq input{flex:1;min-width:0}
   .fq button{border:0;border-radius:12px;background:var(--acc);color:#fff;font-weight:700;font-size:16px;padding:0 16px;cursor:pointer;white-space:nowrap}
   #fleet{flex:1;min-height:0;overflow-y:auto;padding:0 12px 12px}
-  .car{background:var(--card);border-radius:12px;padding:10px 8px 10px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border:2px solid transparent;cursor:pointer}
-  .car.sel{border-color:var(--acc);background:#f3f7ff}
+  .car{background:var(--card);border-radius:12px;padding:10px 8px 10px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border:1px solid var(--bc,transparent);cursor:pointer}
+  .car.sel{border:2px solid var(--acc);padding:9px 7px 9px 9px}
   .chk{width:28px;height:28px;border-radius:8px;border:2px solid #b8c0cc;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;flex:none;background:#fff}
   .car.sel .chk{background:var(--acc);border-color:var(--acc)}
   .car .main{flex:1;min-width:0}
@@ -157,7 +157,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
-    <div class="ver">Версия 17</div>
+    <div class="ver">Версия 18</div>
   </div>
 </header>
 <div class="tabs">
@@ -452,7 +452,8 @@ function brandStyle(b){
     brandSlot[k]=slot;
     try{localStorage.setItem('brand_colors_v1',JSON.stringify(brandSlot));}catch(e){}
   }
-  return ' style="background:hsl('+(brandSlot[k]*15)+' 65% 93%)"';
+  const hu=brandSlot[k]*15;
+  return ' style="background:hsl('+hu+' 65% 93%);--bc:hsl('+hu+' 42% 70%)"';
 }
 function renderLog(toEnd){
   $('cNow').textContent=log.filter(r=>!r.out).length;$('cAll').textContent=log.length;
