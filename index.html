@@ -270,9 +270,39 @@ function autofill(){
   if(!o.value||o.value===lastAuto){o.value=cand;lastAuto=cand;}
 }
 const kpMain=keypad($('kpMain'),$('plate'),autofill);
-function ensureFleet(p,org){
-  if(fleetBy(p))return '';
-  fleet.push({id:newId(),plate:p,brand:'',driver:'',org:org||''});saveFleet();return ' · добавлен в автопарк';
+/* определение: ФИО водителя или организация */
+const FIRST=new Set('александр алексей андрей анатолий артем артём борис вадим валентин валерий василий виктор виталий владимир владислав вячеслав геннадий георгий григорий давид даниил денис дмитрий евгений егор иван игорь илья кирилл константин леонид максим михаил никита николай олег павел пётр петр роман руслан сергей станислав степан тимур фёдор федор юрий ярослав анна анастасия валентина вера галина дарья екатерина елена ирина лариса людмила марина мария наталья надежда ольга светлана татьяна юлия оксана ион василе николае георге влад саша коля миша женя дима витя вася петя костя'.split(' '));
+const ORG_KW=/(^|[\s«"'(])(ооо|зао|оао|пао|ао|ип|чп|гуп|муп|унп|нко|тоо|сп|тсж|гу|мбу|мку|гбу|кфх|пк|ск|тк|тц|тд|компания|фирма|предприятие|завод|фабрика|комбинат|магазин|маркет|склад|база|служба|управление|администрация|школа|сад|больница|поликлиника|банк|ресторан|кафе|отель|гостиница|центр|сервис|трейд|групп|холдинг|бригада|отдел|цех|строй[а-яё]*|транс[а-яё]*|авто[а-яё]*|агро[а-яё]*|торг[а-яё]*|снаб[а-яё]*|монтаж[а-яё]*)(?=$|[\s»"').,])/;
+const PATR=/(ович|евич|ьич|овна|евна|ична|инична|оглы|кызы)$/;
+const SURN=/(ов|ова|ев|ева|ёв|ёва|ин|ина|ын|ына|ский|ская|цкий|цкая|енко|чук|юк|ян|дзе)$/;
+const isIni=x=>/^[а-яё]\.([а-яё]\.)?$/i.test(x);
+function classify(part){
+  const t=part.trim();if(!t)return null;
+  const low=t.toLowerCase();
+  if(/[«»"“”&\d]/.test(t)||/[a-z]{3,}/i.test(t)||ORG_KW.test(low))return 'org';
+  const w=low.split(/\s+/);
+  if(w.length>3||!w.every(x=>isIni(x)||/^[а-яё-]+$/.test(x)))return 'org';
+  if(w.length>=2)return (w.some(isIni)||w.some(x=>PATR.test(x)&&x.length>=6)||w.some(x=>FIRST.has(x)))?'driver':'org';
+  const x=w[0];
+  return (FIRST.has(x)||(x.length>=5&&SURN.test(x)))?'driver':'org';
+}
+const titleCase=t=>t.split(/\s+/).map(x=>isIni(x)?x.toUpperCase():x.split('-').map(y=>y.charAt(0).toUpperCase()+y.slice(1).toLowerCase()).join('-')).join(' ');
+function parseWho(text){
+  const parts=String(text||'').split(/\s*[,;\n]\s*|\s+[—–-]\s+|\s\/\s/).map(x=>x.trim()).filter(Boolean);
+  const dr=[],og=[];
+  parts.forEach(x=>{if(classify(x)==='driver')dr.push(titleCase(x));else og.push(x);});
+  return {driver:dr.join(', '),org:og.join(', ')};
+}
+function ensureFleet(p,text){
+  const w=parseWho(text), v=fleetBy(p);
+  if(!v){
+    fleet.push({id:newId(),plate:p,brand:'',driver:w.driver,org:w.org});saveFleet();return ' · добавлен в автопарк';
+  }
+  let ch=false;
+  if(!v.driver&&w.driver){v.driver=w.driver;ch=true;}
+  if(!v.org&&w.org){v.org=w.org;ch=true;}
+  if(ch){saveFleet();return ' · данные дополнены в автопарке';}
+  return '';
 }
 function resetForm(){$('plate').value='';$('org').value='';lastAuto='';kpMain.reset();blurActive();}
 const addIn=(p,org,brand,t,noTime)=>log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:brand||'',in:noTime?null:t,out:null,added:t});
