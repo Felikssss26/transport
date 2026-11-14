@@ -82,6 +82,8 @@
   .kp .s3{grid-column:span 3}
   .typing .kp{display:none}
 
+  .sortbtn{border:0;background:#e3e8f0;color:var(--text);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .sortbtn:active{background:#cdd5e0}
   /* подсказки и выбор */
   #sug{display:none;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
   #sug.on{display:flex}
@@ -160,7 +162,7 @@
 </div>
 
 <div class="view on" id="vLog">
-  <div class="bar"><span>На территории: <b id="cNow">0</b></span><span>Записей: <b id="cAll">0</b></span></div>
+  <div class="bar"><span>На территории: <b id="cNow">0</b></span><button class="sortbtn" id="sortBtn">⇅ Время ▲</button><span>Записей: <b id="cAll">0</b></span></div>
   <div id="list"></div>
   <div class="panel">
     <input id="plate" class="txt plate" readonly inputmode="none" placeholder="ГОСНОМЕР" autocomplete="off">
@@ -431,9 +433,44 @@ function del(id,ev){
   log=log.filter(r=>String(r.id)!==String(id));saveLog();renderLog();renderFleet();
 }
 const tkey=r=>r.in??r.added??r.out;
+/* сортировка журнала */
+const SORTS=[['time','По времени въезда'],['plate','По номеру'],['brand','По марке'],['driver','По ФИО водителя'],['org','По названию организации']];
+const SHORT={time:'Время',plate:'Номер',brand:'Марка',driver:'ФИО',org:'Организация'};
+let sortKey='time',sortDir=1;
+try{const sv=JSON.parse(localStorage.getItem('vehicle_sort_v1')||'null');if(sv&&SHORT[sv.k]){sortKey=sv.k;sortDir=sv.d===-1?-1:1;}}catch(e){}
+function recInfo(r){
+  const v=r.vid&&fleet.find(x=>x.id===r.vid);
+  if(v)return {brand:v.brand||'',driver:v.driver||'',org:v.org||''};
+  const w=parseWho(r.org);return {brand:r.brand||'',driver:w.driver,org:w.org};
+}
+function sortVal(r){
+  if(sortKey==='plate')return norm(r.plate);
+  const i=recInfo(r);
+  if(sortKey==='org')return i.org.replace(/[«»"“”]/g,'').replace(/^\s*(ооо|зао|оао|пао|ао|ип|чп|гуп|муп|унп|нко|тоо|сп|тсж|гу|мбу|мку|гбу|кфх)\s+/i,'');
+  return sortKey==='brand'?i.brand:i.driver;
+}
+function sortedLog(){
+  const arr=[...log];
+  if(sortKey==='time')return arr.sort((a,b)=>sortDir*(tkey(a)-tkey(b)));
+  const cmp=(x,y)=>String(x).localeCompare(String(y),'ru',{numeric:true,sensitivity:'base'});
+  return arr.sort((a,b)=>{
+    const x=String(sortVal(a)).trim(),y=String(sortVal(b)).trim();
+    if(!x&&y)return 1;if(x&&!y)return -1;      // пустые всегда в конце
+    return sortDir*cmp(x,y)||(tkey(a)-tkey(b));
+  });
+}
+$('sortBtn').onclick=()=>{
+  choose('Сортировка журнала',SORTS.map(([k,t])=>({t:t,s:'',b:k===sortKey?(sortDir>0?'▲ по возрастанию':'▼ по убыванию'):''})),i=>{
+    const k=SORTS[i][0];
+    if(k===sortKey)sortDir=-sortDir;else{sortKey=k;sortDir=1;}
+    try{localStorage.setItem('vehicle_sort_v1',JSON.stringify({k:sortKey,d:sortDir}));}catch(e){}
+    renderLog(true);
+  });
+};
 function renderLog(toEnd){
   $('cNow').textContent=log.filter(r=>!r.out).length;$('cAll').textContent=log.length;
-  const items=[...log].sort((a,b)=>tkey(a)-tkey(b));
+  const items=sortedLog();
+  $('sortBtn').textContent='⇅ '+SHORT[sortKey]+(sortDir>0?' ▲':' ▼');
   $('list').innerHTML=items.length?items.map(r=>`
     <div class="row ${r.out?'done':''}" onclick="pick('${r.id}')">
       <div class="main"><div class="pl">${esc(r.plate)}</div><div class="og">${esc([r.brand,r.org].filter(Boolean).join(' · '))||'&nbsp;'}</div></div>
@@ -446,7 +483,7 @@ function renderLog(toEnd){
   const orgs=[...new Set([...log.map(r=>r.org),...fleet.map(compose)].filter(Boolean))];
   $('dlOrgs').innerHTML=orgs.map(v=>`<option value="${esc(v)}">`).join('');
   renderSug();
-  if(toEnd){const l=$('list');l.scrollTop=l.scrollHeight;}
+  if(toEnd){const l=$('list');l.scrollTop=(sortKey==='time'&&sortDir>0)?l.scrollHeight:0;}
 }
 
 /* ---------- автопарк ---------- */
