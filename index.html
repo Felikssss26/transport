@@ -82,6 +82,26 @@
   .kp .s3{grid-column:span 3}
   .typing .kp{display:none}
 
+  /* подсказки и выбор */
+  #sug{display:none;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+  #sug.on{display:flex}
+  .typing #sug{display:none!important}
+  .chip{flex:none;border:2px solid var(--line);background:#f6f8fb;border-radius:10px;padding:4px 10px;text-align:left;font-size:12px;color:var(--muted);cursor:pointer;max-width:190px;min-width:86px}
+  .chip b{display:block;font-size:16px;color:var(--text);letter-spacing:1px}
+  .chip span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip.on{border-color:var(--acc);background:#eef3ff}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--in);margin-left:6px;vertical-align:middle}
+  #choose{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);align-items:flex-end;justify-content:center}
+  #choose.on{display:flex}
+  #choose .sheet{background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:80vh;overflow-y:auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+  #choose .sh{font-size:17px;font-weight:800;margin:2px 2px 12px}
+  .opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:11px 14px;margin-bottom:8px;cursor:pointer;color:var(--text)}
+  .opt:active{background:#eef3ff;border-color:var(--acc)}
+  .opt:disabled{opacity:.45}
+  .opt .o1{font-size:20px;font-weight:800;letter-spacing:1px}
+  .opt .o2{font-size:14px;color:var(--muted);margin-top:2px}
+  #chCancel{width:100%;border:0;background:#e8ecf2;color:var(--text);border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:2px}
+
   /* автопарк */
   .fq{display:flex;gap:8px;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--line)}
   .fq input{flex:1;min-width:0}
@@ -144,6 +164,7 @@
   <div id="list"></div>
   <div class="panel">
     <input id="plate" class="txt plate" readonly inputmode="none" placeholder="ГОСНОМЕР" autocomplete="off">
+    <div id="sug"></div>
     <div class="kp" id="kpMain"></div>
     <input id="org" class="txt" data-t placeholder="Водитель/организация (необязательно)" autocomplete="off" list="dlOrgs" enterkeyhint="done">
     <datalist id="dlOrgs"></datalist>
@@ -187,6 +208,7 @@
   </div>
 </div>
 
+<div id="choose"><div class="sheet"><div class="sh" id="chTitle"></div><div id="chList"></div><button id="chCancel">Отмена</button></div></div>
 <div id="toast"></div>
 <input type="file" id="file" accept=".json,application/json" style="display:none">
 
@@ -254,22 +276,46 @@ document.addEventListener('pointerdown',e=>{
 });
 
 /* ---------- журнал ---------- */
-const inside=p=>log.find(r=>!r.out&&norm(r.plate)===p);
+let chosen=null;
 const fleetBy=p=>fleet.find(v=>norm(v.plate)===p);
+const cands=p=>fleet.filter(v=>norm(v.plate)===p);
+const vidOf=r=>r.vid||((fleetBy(norm(r.plate))||{}).id);
+const insideV=v=>log.find(r=>!r.out&&vidOf(r)===v.id);
+const insideP=p=>log.filter(r=>!r.out&&norm(r.plate)===p);
 const compose=v=>[v.driver,v.org].filter(Boolean).join(', ');
+const lw=s=>String(s||'').trim().toLowerCase();
+const dkey=x=>norm(x.plate)+'|'+lw(x.driver);
 let lastAuto='';
 function autofill(){
   const p=norm($('plate').value);
   let cand='';
   if(p){
-    const v=fleetBy(p);
-    if(v)cand=compose(v);
-    else{const k=[...log].reverse().find(r=>norm(r.plate)===p&&r.org);if(k)cand=k.org;}
+    const ch=chosen&&fleet.find(x=>x.id===chosen);
+    if(ch)cand=compose(ch);
+    else{
+      const cs=cands(p);
+      if(cs.length===1)cand=compose(cs[0]);
+      else if(!cs.length){const k=[...log].reverse().find(r=>norm(r.plate)===p&&r.org);if(k)cand=k.org;}
+    }
   }
   const o=$('org');
   if(!o.value||o.value===lastAuto){o.value=cand;lastAuto=cand;}
 }
-const kpMain=keypad($('kpMain'),$('plate'),autofill);
+function renderSug(){
+  const box=$('sug'),q=norm($('plate').value);
+  const m=q?fleet.filter(v=>norm(v.plate).includes(q)):[];
+  if(!m.length){box.className='';box.innerHTML='';return;}
+  m.sort((a,b)=>(norm(b.plate).startsWith(q)-norm(a.plate).startsWith(q))||norm(a.plate).localeCompare(norm(b.plate)));
+  box.innerHTML=m.slice(0,10).map(v=>`<button type="button" class="chip ${v.id===chosen?'on':''}" data-id="${v.id}"><b>${esc(v.plate)}${insideV(v)?'<i class="dot"></i>':''}</b><span>${esc([v.driver||v.org,v.brand].filter(Boolean).join(' · '))||'&nbsp;'}</span></button>`).join('');
+  box.className='on';
+}
+$('sug').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  const v=fleet.find(x=>x.id===b.dataset.id);if(!v)return;
+  chosen=v.id;$('plate').value=v.plate;$('org').value=compose(v);lastAuto=compose(v);renderSug();vib(10);
+});
+function onPlate(){chosen=null;autofill();renderSug();}
+const kpMain=keypad($('kpMain'),$('plate'),onPlate);
 /* определение: ФИО водителя или организация */
 const FIRST=new Set('александр алексей андрей анатолий артем артём борис вадим валентин валерий василий виктор виталий владимир владислав вячеслав геннадий георгий григорий давид даниил денис дмитрий евгений егор иван игорь илья кирилл константин леонид максим михаил никита николай олег павел пётр петр роман руслан сергей станислав степан тимур фёдор федор юрий ярослав анна анастасия валентина вера галина дарья екатерина елена ирина лариса людмила марина мария наталья надежда ольга светлана татьяна юлия оксана ион василе николае георге влад саша коля миша женя дима витя вася петя костя'.split(' '));
 const ORG_KW=/(^|[\s«"'(])(ооо|зао|оао|пао|ао|ип|чп|гуп|муп|унп|нко|тоо|сп|тсж|гу|мбу|мку|гбу|кфх|пк|ск|тк|тц|тд|компания|фирма|предприятие|завод|фабрика|комбинат|магазин|маркет|склад|база|служба|управление|администрация|школа|сад|больница|поликлиника|банк|ресторан|кафе|отель|гостиница|центр|сервис|трейд|групп|холдинг|бригада|отдел|цех|строй[а-яё]*|транс[а-яё]*|авто[а-яё]*|агро[а-яё]*|торг[а-яё]*|снаб[а-яё]*|монтаж[а-яё]*)(?=$|[\s»"').,])/;
@@ -293,47 +339,91 @@ function parseWho(text){
   parts.forEach(x=>{if(classify(x)==='driver')dr.push(titleCase(x));else og.push(x);});
   return {driver:dr.join(', '),org:og.join(', ')};
 }
-function ensureFleet(p,text){
-  const w=parseWho(text), v=fleetBy(p);
-  if(!v){
-    fleet.push({id:newId(),plate:p,brand:'',driver:w.driver,org:w.org});saveFleet();return ' · добавлен в автопарк';
-  }
-  let ch=false;
+function addVehicle(p,w){
+  const v={id:newId(),plate:p,brand:'',driver:w.driver,org:w.org};fleet.push(v);saveFleet();return v;
+}
+function fillFrom(v,txt){
+  const w=parseWho(txt);let ch=false;
   if(!v.driver&&w.driver){v.driver=w.driver;ch=true;}
   if(!v.org&&w.org){v.org=w.org;ch=true;}
   if(ch){saveFleet();return ' · данные дополнены в автопарке';}
   return '';
 }
-function resetForm(){$('plate').value='';$('org').value='';lastAuto='';kpMain.reset();blurActive();}
-const addIn=(p,org,brand,t,noTime)=>log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:brand||'',in:noTime?null:t,out:null,added:t});
+let chCb=null;
+function choose(title,items,cb){
+  $('chTitle').textContent=title;
+  $('chList').innerHTML=items.map((it,i)=>`<button type="button" class="opt" data-i="${i}" ${it.d?'disabled':''}><div class="o1">${esc(it.t)}${it.b?'<span class="badge">'+esc(it.b)+'</span>':''}</div><div class="o2">${esc(it.s)||'&nbsp;'}</div></button>`).join('');
+  chCb=cb;$('choose').classList.add('on');
+}
+function closeChoose(){$('choose').classList.remove('on');chCb=null;}
+$('chList').addEventListener('click',e=>{
+  const b=e.target.closest('.opt');if(!b||b.disabled)return;
+  const i=+b.dataset.i,cb=chCb;closeChoose();if(cb)cb(i);
+});
+$('chCancel').onclick=closeChoose;
+$('choose').addEventListener('click',e=>{if(e.target===$('choose'))closeChoose();});
+
+/* какой именно автомобиль из базы имеется в виду (номер может повторяться) */
+function resolveVehicle(p,done,forIn){
+  const txt=$('org').value.trim(), cs=cands(p), w=parseWho(txt);
+  let v=chosen?fleet.find(x=>x.id===chosen&&norm(x.plate)===p):null;
+  if(v)return done(v,fillFrom(v,txt));
+  if(!cs.length)return done(addVehicle(p,w),' · добавлен в автопарк');
+  if(txt){
+    v=cs.find(c=>lw(compose(c))===lw(txt))||(w.driver&&cs.find(c=>lw(c.driver)===lw(w.driver)))||(!w.driver&&w.org&&cs.find(c=>lw(c.org)===lw(w.org)));
+    if(v)return done(v,fillFrom(v,txt));
+    if(w.driver){
+      v=cs.find(c=>!c.driver);
+      if(v)return done(v,fillFrom(v,txt));
+      return done(addVehicle(p,w),' · добавлен в автопарк как ещё одна машина с этим номером');
+    }
+  }
+  if(cs.length===1)return done(cs[0],fillFrom(cs[0],txt));
+  if(forIn&&cs.every(c=>insideV(c)))return toast('Все автомобили с номером '+p+' уже на территории');
+  choose('Выберите автомобиль · '+p,cs.map(c=>({t:c.plate,s:[c.driver||c.org,c.brand].filter(Boolean).join(' · '),b:insideV(c)?'на территории':'',d:!!(forIn&&insideV(c))})),i=>done(cs[i],fillFrom(cs[i],txt)));
+}
+function resetForm(){$('plate').value='';$('org').value='';lastAuto='';chosen=null;kpMain.reset();renderSug();blurActive();}
+const addIn=(p,org,brand,t,noTime,vid)=>log.push({id:Date.now()+Math.random(),plate:p,vid:vid,org:org,brand:brand||'',in:noTime?null:t,out:null,added:t});
 
 $('bIn').onclick=()=>{
   const p=norm($('plate').value);
   if(!p)return toast('Введите госномер');
-  if(inside(p))return toast(p+' уже на территории');
-  const v=fleetBy(p), t=Date.now(), org=$('org').value.trim()||(v?compose(v):'');
-  addIn(p,org,v?v.brand:'',t);
-  const add=ensureFleet(p,org);
-  saveLog();toast('ВЪЕЗД '+p+' — '+hm(t)+add,true);resetForm();renderLog(true);renderFleet();
+  const txt=$('org').value.trim();
+  resolveVehicle(p,(v,msg)=>{
+    if(insideV(v))return toast(p+' ('+(v.driver||v.org||'эта машина')+') уже на территории. Если это другая машина с таким номером, введите водителя или организацию.');
+    const t=Date.now();
+    addIn(p,compose(v)||txt,v.brand,t,false,v.id);
+    saveLog();toast('ВЪЕЗД '+p+' — '+hm(t)+msg,true);resetForm();renderLog(true);renderFleet();
+  },true);
 };
 $('bOut').onclick=()=>{
   const p=norm($('plate').value);
   if(!p)return toast('Введите госномер');
-  const v=fleetBy(p), t=Date.now(), org=$('org').value.trim()||(v?compose(v):'');
-  const r=inside(p);
-  if(!r){
-    log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:v?v.brand||'':'',in:null,out:t});
-    const add=ensureFleet(p,org);
-    saveLog();toast('ВЫЕЗД '+p+' — '+hm(t)+' (въезд не отмечен)'+add,true);resetForm();renderLog(true);renderFleet();return;
-  }
-  r.out=t;if(org&&!r.org)r.org=org;
-  saveLog();toast('ВЫЕЗД '+p+' — '+hm(t),true);resetForm();renderLog();renderFleet();
+  const txt=$('org').value.trim(), w=parseWho(txt);
+  const exitRec=r=>{
+    const t=Date.now();r.out=t;if(txt&&!r.org)r.org=txt;
+    saveLog();toast('ВЫЕЗД '+p+' — '+hm(t),true);resetForm();renderLog();renderFleet();
+  };
+  const exitOnly=()=>resolveVehicle(p,(v,msg)=>{
+    const t=Date.now();
+    log.push({id:Date.now()+Math.random(),plate:p,vid:v.id,org:compose(v)||txt,brand:v.brand||'',in:null,out:t});
+    saveLog();toast('ВЫЕЗД '+p+' — '+hm(t)+' (въезд не отмечен)'+msg,true);resetForm();renderLog(true);renderFleet();
+  },false);
+  const match=x=>!txt||lw(x.org)===lw(txt)||(w.driver&&lw(x.org).includes(lw(w.driver)))||(!w.driver&&w.org&&lw(x.org).includes(lw(w.org)));
+  const ins=insideP(p);
+  const v0=chosen?fleet.find(x=>x.id===chosen&&norm(x.plate)===p):null;
+  if(v0){const r=ins.find(x=>vidOf(x)===v0.id);return r?exitRec(r):exitOnly();}
+  if(!ins.length)return exitOnly();
+  if(ins.length===1)return (match(ins[0])||!w.driver)?exitRec(ins[0]):exitOnly();
+  const r=txt&&ins.find(match);
+  if(r)return exitRec(r);
+  choose('Какая машина выезжает? · '+p,ins.map(x=>({t:x.plate,s:[x.brand,x.org].filter(Boolean).join(' · '),b:x.in?'с '+hm(x.in):'на территории'})),i=>exitRec(ins[i]));
 };
 $('org').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
 
 function pick(id){
   const r=log.find(x=>String(x.id)===String(id));if(!r)return;
-  $('plate').value=r.plate;$('org').value=r.org||'';lastAuto=r.org||'';
+  $('plate').value=r.plate;$('org').value=r.org||'';lastAuto=r.org||'';chosen=(r.vid&&fleet.some(v=>v.id===r.vid))?r.vid:null;renderSug();
 }
 function del(id,ev){
   ev.stopPropagation();
@@ -355,6 +445,7 @@ function renderLog(toEnd){
     </div>`).join(''):'<div class="empty">Пока нет записей</div>';
   const orgs=[...new Set([...log.map(r=>r.org),...fleet.map(compose)].filter(Boolean))];
   $('dlOrgs').innerHTML=orgs.map(v=>`<option value="${esc(v)}">`).join('');
+  renderSug();
   if(toEnd){const l=$('list');l.scrollTop=l.scrollHeight;}
 }
 
@@ -365,11 +456,11 @@ function togSel(id){if(sel.has(id))sel.delete(id);else sel.add(id);renderFleet()
 function renderFleet(){
   const q=fquery.trim().toLowerCase(), qn=norm(fquery);
   const items=fleet.filter(v=>!q||[v.plate,v.brand,v.driver,v.org].join(' ').toLowerCase().includes(q)||(qn&&norm(v.plate).includes(qn)))
-    .sort((a,b)=>norm(a.plate).localeCompare(norm(b.plate)));
+    .sort((a,b)=>norm(a.plate).localeCompare(norm(b.plate))||lw(a.driver).localeCompare(lw(b.driver)));
   $('fCnt').textContent=fleet.length;
-  $('fIn').textContent=fleet.filter(v=>inside(norm(v.plate))).length;
+  $('fIn').textContent=fleet.filter(v=>insideV(v)).length;
   $('fleet').innerHTML=items.length?items.map(v=>{
-    const on=!!inside(norm(v.plate)), s=sel.has(v.id);
+    const on=!!insideV(v), s=sel.has(v.id);
     return `<div class="car ${s?'sel':''}" onclick="togSel('${v.id}')">
       <div class="chk">${s?'✓':''}</div>
       <div class="main"><div class="pl">${esc(v.plate)}${on?'<span class="badge">на территории</span>':''}</div>
@@ -377,7 +468,7 @@ function renderFleet(){
       <button class="edit" onclick="editCar('${v.id}',event)" aria-label="Править">✎</button>
     </div>`;}).join(''):(fleet.length?'<div class="empty">Ничего не найдено</div>':'<div class="empty">База пуста.<br>Нажмите «＋ Авто», чтобы добавить автомобиль.</div>');
   let a=0,b=0;
-  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v){sel.delete(id);return;}inside(norm(v.plate))?b++:a++;});
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v){sel.delete(id);return;}insideV(v)?b++:a++;});
   $('acts').classList.toggle('on',sel.size>0);
   $('aIn').textContent='ВЪЕЗД ('+a+')';$('aIn').disabled=!a;
   $('aOut').textContent='ВЫЕЗД ('+b+')';$('aOut').disabled=!b;
@@ -386,12 +477,12 @@ $('fq').addEventListener('input',e=>{fquery=e.target.value;renderFleet();});
 $('fq').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
 $('aIn').onclick=()=>{
   const t=Date.now();let n=0;
-  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const p=norm(v.plate);if(inside(p))return;addIn(p,compose(v),v.brand,t,true);n++;});
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;if(insideV(v))return;addIn(norm(v.plate),compose(v),v.brand,t,true,v.id);n++;});
   sel.clear();saveLog();renderLog(true);renderFleet();toast('Перенесено на территорию: '+n+' авто (без времени въезда)',true);
 };
 $('aOut').onclick=()=>{
   const t=Date.now();let n=0;
-  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const r=inside(norm(v.plate));if(!r)return;r.out=t;n++;});
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const r=insideV(v);if(!r)return;r.out=t;n++;});
   sel.clear();saveLog();renderLog();renderFleet();toast('Выезд: '+n+' авто, '+hm(t),true);
 };
 $('aClr').onclick=()=>{sel.clear();renderFleet();};
@@ -414,13 +505,13 @@ $('mClose').onclick=closeModal;
 $('mSave').onclick=()=>{
   const p=norm($('fPlate').value);
   if(!p)return toast('Введите госномер');
-  if(fleet.some(v=>v.id!==editId&&norm(v.plate)===p))return toast('Автомобиль '+p+' уже есть в базе');
   const data={plate:p,brand:$('fBrand').value.trim(),driver:$('fDriver').value.trim(),org:$('fOrg').value.trim()};
+  if(fleet.some(v=>v.id!==editId&&dkey(v)===dkey(data)))return toast('Такой автомобиль (номер и водитель) уже есть в базе');
   if(editId){
     const v=fleet.find(x=>x.id===editId);
     if(v){
       const old=norm(v.plate);Object.assign(v,data);
-      if(old!==p){log.forEach(r=>{if(!r.out&&norm(r.plate)===old)r.plate=p;});saveLog();}
+      if(old!==p){log.forEach(r=>{if(!r.out&&(r.vid===v.id||(!r.vid&&norm(r.plate)===old)))r.plate=p;});saveLog();}
     }
   }else fleet.push(Object.assign({id:newId()},data));
   saveFleet();closeModal();renderFleet();renderLog();toast('Сохранено',true);
@@ -451,10 +542,10 @@ $('file').onchange=e=>{
       if(!Array.isArray(data))throw 0;
       const list=data.filter(x=>x&&norm(x.plate));
       if(!list.length)throw 0;
-      if(!confirm('Добавить или обновить авто из файла: '+list.length+' шт.?\nАвто с совпадающим номером будут обновлены.'))return;
+      if(!confirm('Добавить или обновить авто из файла: '+list.length+' шт.?\nАвто с совпадающими номером и водителем будут обновлены.'))return;
       list.forEach(x=>{
         const p=norm(x.plate),d={plate:p,brand:String(x.brand||'').trim(),driver:String(x.driver||'').trim(),org:String(x.org||'').trim()};
-        const ex=fleetBy(p);if(ex)Object.assign(ex,d);else fleet.push(Object.assign({id:newId()},d));
+        const ex=fleet.find(v=>dkey(v)===dkey(d));if(ex)Object.assign(ex,d);else fleet.push(Object.assign({id:newId()},d));
       });
       saveFleet();renderFleet();renderLog();toast('База загружена',true);
     }catch(_){toast('Не удалось прочитать файл базы');}
