@@ -119,9 +119,11 @@
   .edit{border:0;background:#eef1f5;border-radius:10px;width:42px;height:42px;font-size:18px;cursor:pointer;flex:none}
   .acts{display:none;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
   .acts.on{display:flex}
-  .acts .a{flex:1;border:0;border-radius:12px;padding:15px 6px;font-size:17px;font-weight:800;color:#fff;cursor:pointer}
+  .acts .a{flex:1;min-width:0;border:0;border-radius:12px;padding:9px 4px;color:#fff;cursor:pointer;line-height:1.2}
+  .acts .a b{display:block;font-size:16px;font-weight:800}
+  .acts .a small{display:block;font-size:11px;font-weight:600;opacity:.92;margin-top:2px}
   .acts .a:disabled{opacity:.3}
-  .acts #aIn{background:var(--in)} .acts #aOut{background:var(--out)}
+  .acts #aIn0{background:#2f8f83} .acts #aIn1{background:var(--in)} .acts #aOut{background:var(--out)}
   .acts #aClr{flex:none;width:52px;background:#e8ecf2;color:var(--text);font-size:18px}
 
   /* окно правки */
@@ -185,8 +187,9 @@
   <div class="bar"><span>Всего: <b id="fCnt">0</b></span><button class="sortbtn" id="fSortBtn">⇅ Номер ▲</button><span>На территории: <b id="fIn">0</b></span></div>
   <div id="fleet"></div>
   <div class="acts" id="acts">
-    <button class="a" id="aIn">ВЪЕЗД</button>
-    <button class="a" id="aOut">ВЫЕЗД</button>
+    <button class="a" id="aIn0"><b>ВЪЕЗД</b><small>без времени</small></button>
+    <button class="a" id="aIn1"><b>ВЪЕЗД</b><small>со временем</small></button>
+    <button class="a" id="aOut"><b>ВЫЕЗД</b><small></small></button>
     <button class="a" id="aClr" aria-label="Снять выбор">✕</button>
   </div>
 </div>
@@ -495,16 +498,20 @@ function renderFleet(){
   let a=0,b=0;
   [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v){sel.delete(id);return;}insideV(v)?b++:a++;});
   $('acts').classList.toggle('on',sel.size>0);
-  $('aIn').textContent='ВЪЕЗД ('+a+')';$('aIn').disabled=!a;
-  $('aOut').textContent='ВЫЕЗД ('+b+')';$('aOut').disabled=!b;
+  $('aIn0').querySelector('small').textContent='без времени ('+a+')';$('aIn0').disabled=!a;
+  $('aIn1').querySelector('small').textContent='со временем ('+a+')';$('aIn1').disabled=!a;
+  $('aOut').querySelector('small').textContent='('+b+')';$('aOut').disabled=!b;
 }
 $('fq').addEventListener('input',e=>{fquery=e.target.value;renderFleet();});
 $('fq').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
-$('aIn').onclick=()=>{
+function bulkIn(withTime){
   const t=Date.now();let n=0;
-  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;if(insideV(v))return;addIn(norm(v.plate),compose(v),v.brand,t,true,v.id);n++;});
-  sel.clear();saveLog();renderLog(true);renderFleet();toast('Перенесено на территорию: '+n+' авто (без времени въезда)',true);
-};
+  [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;if(insideV(v))return;addIn(norm(v.plate),compose(v),v.brand,t,!withTime,v.id);n++;});
+  sel.clear();saveLog();renderLog(true);renderFleet();
+  toast(withTime?'Въезд: '+n+' авто, '+hm(t):'Перенесено на территорию: '+n+' авто (без времени въезда)',true);
+}
+$('aIn0').onclick=()=>bulkIn(false);
+$('aIn1').onclick=()=>bulkIn(true);
 $('aOut').onclick=()=>{
   const t=Date.now();let n=0;
   [...sel].forEach(id=>{const v=fleet.find(x=>x.id===id);if(!v)return;const r=insideV(v);if(!r)return;r.out=t;n++;});
