@@ -270,6 +270,10 @@ function autofill(){
   if(!o.value||o.value===lastAuto){o.value=cand;lastAuto=cand;}
 }
 const kpMain=keypad($('kpMain'),$('plate'),autofill);
+function ensureFleet(p,org){
+  if(fleetBy(p))return '';
+  fleet.push({id:newId(),plate:p,brand:'',driver:'',org:org||''});saveFleet();return ' · добавлен в автопарк';
+}
 function resetForm(){$('plate').value='';$('org').value='';lastAuto='';kpMain.reset();blurActive();}
 const addIn=(p,org,brand,t,noTime)=>log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:brand||'',in:noTime?null:t,out:null,added:t});
 
@@ -277,9 +281,10 @@ $('bIn').onclick=()=>{
   const p=norm($('plate').value);
   if(!p)return toast('Введите госномер');
   if(inside(p))return toast(p+' уже на территории');
-  const v=fleetBy(p), t=Date.now();
-  addIn(p,$('org').value.trim()||(v?compose(v):''),v?v.brand:'',t);
-  saveLog();toast('ВЪЕЗД '+p+' — '+hm(t),true);resetForm();renderLog(true);renderFleet();
+  const v=fleetBy(p), t=Date.now(), org=$('org').value.trim()||(v?compose(v):'');
+  addIn(p,org,v?v.brand:'',t);
+  const add=ensureFleet(p,org);
+  saveLog();toast('ВЪЕЗД '+p+' — '+hm(t)+add,true);resetForm();renderLog(true);renderFleet();
 };
 $('bOut').onclick=()=>{
   const p=norm($('plate').value);
@@ -288,7 +293,8 @@ $('bOut').onclick=()=>{
   const r=inside(p);
   if(!r){
     log.push({id:Date.now()+Math.random(),plate:p,org:org,brand:v?v.brand||'':'',in:null,out:t});
-    saveLog();toast('ВЫЕЗД '+p+' — '+hm(t)+' (въезд не отмечен)',true);resetForm();renderLog(true);renderFleet();return;
+    const add=ensureFleet(p,org);
+    saveLog();toast('ВЫЕЗД '+p+' — '+hm(t)+' (въезд не отмечен)'+add,true);resetForm();renderLog(true);renderFleet();return;
   }
   r.out=t;if(org&&!r.org)r.org=org;
   saveLog();toast('ВЫЕЗД '+p+' — '+hm(t),true);resetForm();renderLog();renderFleet();
