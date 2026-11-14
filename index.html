@@ -33,6 +33,7 @@
   .menu button:last-child{border-bottom:0}
   .menu button:active{background:var(--bg)}
   .menu .clr{color:var(--danger)}
+  .menu .ver{padding:8px 18px;font-size:12px;color:var(--muted);background:#f6f8fb;text-align:right}
   #install{display:none}
 
   .tabs{display:flex;background:#1c2430;padding:0 8px}
@@ -156,6 +157,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
+    <div class="ver">Версия 17</div>
   </div>
 </header>
 <div class="tabs">
@@ -436,11 +438,27 @@ function del(id,ev){
   log=log.filter(r=>String(r.id)!==String(id));saveLog();renderLog();renderFleet();
 }
 const tkey=r=>r.in??r.added??r.out;
+/* цвет карточки по марке: одна марка — один мягкий оттенок, закрепляется за маркой */
+let brandSlot={};
+try{brandSlot=JSON.parse(localStorage.getItem('brand_colors_v1')||'{}')||{};}catch(e){brandSlot={};}
+function brandStyle(b){
+  const k=String(b||'').trim().toLowerCase();
+  if(!k)return '';
+  if(!(k in brandSlot)){
+    let h=2166136261;for(const c of k){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}
+    const used=new Set(Object.values(brandSlot));
+    let slot=h%24,n=0;
+    while(used.has(slot)&&n++<24)slot=(slot+7)%24;     // занятый оттенок — берём далёкий свободный
+    brandSlot[k]=slot;
+    try{localStorage.setItem('brand_colors_v1',JSON.stringify(brandSlot));}catch(e){}
+  }
+  return ' style="background:hsl('+(brandSlot[k]*15)+' 65% 93%)"';
+}
 function renderLog(toEnd){
   $('cNow').textContent=log.filter(r=>!r.out).length;$('cAll').textContent=log.length;
   const items=[...log].sort((a,b)=>tkey(a)-tkey(b));
   $('list').innerHTML=items.length?items.map(r=>`
-    <div class="row ${r.out?'done':''}" onclick="pick('${r.id}')">
+    <div class="row ${r.out?'done':''}"${brandStyle((r.vid&&(fleet.find(x=>x.id===r.vid)||{}).brand)||r.brand)} onclick="pick('${r.id}')">
       <div class="main"><div class="pl">${esc(r.plate)}</div><div class="og">${esc([r.brand,r.org].filter(Boolean).join(' · '))||'&nbsp;'}</div></div>
       <div class="tm">
         <div>${r.in?`<span class="i">▶ ${hm(r.in)}</span>${sameDay(r.in,Date.now())?'':' <small>'+dm(r.in)+'</small>'}`:'<span class="nn">▶ —</span>'}</div>
@@ -489,7 +507,7 @@ function renderFleet(){
   $('fIn').textContent=fleet.filter(v=>insideV(v)).length;
   $('fleet').innerHTML=items.length?items.map(v=>{
     const on=!!insideV(v), s=sel.has(v.id);
-    return `<div class="car ${s?'sel':''}" onclick="togSel('${v.id}')">
+    return `<div class="car ${s?'sel':''}"${brandStyle(v.brand)} onclick="togSel('${v.id}')">
       <div class="chk">${s?'✓':''}</div>
       <div class="main"><div class="pl">${esc(v.plate)}${on?'<span class="badge">на территории</span>':''}</div>
       <div class="sub">${esc([v.brand,v.driver,v.org].filter(Boolean).join(' · '))||'&nbsp;'}</div></div>
@@ -639,7 +657,11 @@ function tick(){
   $('dt').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 }
 tick();setInterval(tick,15000);renderLog(true);renderFleet();blurActive();
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator){
+  const hadCtl=!!navigator.serviceWorker.controller;let reloading=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtl&&!reloading){reloading=true;location.reload();}});
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));
+}
 </script>
 </body>
 </html>
