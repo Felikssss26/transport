@@ -69,7 +69,14 @@
   .x{border:0;background:none;color:#a0a8b4;font-size:20px;padding:6px;cursor:pointer}
   .empty{text-align:center;color:var(--muted);padding:30px 10px;line-height:1.5}
 
-  .panel{background:var(--card);padding:10px 14px 12px;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+  .panel{background:var(--card);padding:10px 14px 12px;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06);touch-action:pan-x;transition:transform .2s ease}
+  .panel.drag{transition:none}
+  @keyframes panelIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+  .panel.showing{animation:panelIn .2s ease-out}
+  #vLog.collapsed .panel{display:none}
+  #kbBtn{display:none;width:100%;border:0;background:#1c2430;color:#fff;font-size:17px;font-weight:700;padding:15px;cursor:pointer}
+  #kbBtn:active{background:#2b3645}
+  #vLog.collapsed #kbBtn{display:block}
   #org{margin-top:8px}
   #org::placeholder{font-size:14px}
   .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
@@ -169,7 +176,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
-    <div class="ver">Версия 23</div>
+    <div class="ver">Версия 24</div>
   </div>
 </header>
 <div class="tabs">
@@ -191,6 +198,7 @@
       <button class="big" id="bOut">ВЫЕЗД</button>
     </div>
   </div>
+  <button id="kbBtn">⌨ Клавиатура</button>
 </div>
 
 <div class="view" id="vFleet">
@@ -442,7 +450,7 @@ $('org').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
 
 function pick(id){
   const r=log.find(x=>String(x.id)===String(id));if(!r)return;
-  $('plate').value=r.plate;$('org').value=r.org||'';lastAuto=r.org||'';chosen=(r.vid&&fleet.some(v=>v.id===r.vid))?r.vid:null;renderSug();
+  $('plate').value=r.plate;$('org').value=r.org||'';lastAuto=r.org||'';chosen=(r.vid&&fleet.some(v=>v.id===r.vid))?r.vid:null;renderSug();showPanel();
 }
 function del(id,ev){
   ev.stopPropagation();
@@ -707,6 +715,45 @@ function show(v){
   if(v==='log')renderLog(true);else renderFleet();
 }
 $('tLog').onclick=()=>show('log');$('tFleet').onclick=()=>show('fleet');
+
+/* нижний блок журнала: свайп вниз — спрятать, кнопка «Клавиатура» — вернуть */
+const panelEl=document.querySelector('#vLog .panel');
+const isCollapsed=()=>$('vLog').classList.contains('collapsed');
+function hidePanel(){
+  blurActive();panelEl.classList.remove('drag');panelEl.style.transform='translateY(100%)';
+  setTimeout(()=>{$('vLog').classList.add('collapsed');panelEl.style.transform='';},190);
+}
+function showPanel(){
+  if(!isCollapsed())return;
+  $('vLog').classList.remove('collapsed');
+  panelEl.classList.remove('showing');void panelEl.offsetWidth;panelEl.classList.add('showing');
+}
+$('kbBtn').onclick=showPanel;
+(function(){
+  let g=null;
+  panelEl.addEventListener('touchstart',e=>{
+    g=null;if(e.touches.length!==1)return;
+    g={x:e.touches[0].clientX,y:e.touches[0].clientY,drag:false,dy:0};
+  },{passive:true});
+  panelEl.addEventListener('touchmove',e=>{
+    if(!g)return;
+    const t=e.touches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;
+    if(!g.drag){
+      if(dy<10||dy<Math.abs(dx)*1.3)return;
+      g.drag=true;panelEl.classList.add('drag');
+    }
+    g.dy=Math.max(0,dy);panelEl.style.transform='translateY('+g.dy+'px)';
+  },{passive:true});
+  function end(){
+    if(!g||!g.drag){g=null;return;}
+    const hide=g.dy>70;
+    panelEl.classList.remove('drag');
+    if(hide)hidePanel();else panelEl.style.transform='';
+    g=null;sw=null;                                       // не считать это свайпом вкладок
+  }
+  panelEl.addEventListener('touchend',end,{passive:true});
+  panelEl.addEventListener('touchcancel',end,{passive:true});
+})();
 
 /* переключение вкладок свайпом: влево — «Автопарк», вправо — «Журнал» */
 let sw=null;
