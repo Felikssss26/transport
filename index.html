@@ -169,7 +169,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
-    <div class="ver">Версия 22</div>
+    <div class="ver">Версия 23</div>
   </div>
 </header>
 <div class="tabs">
@@ -578,7 +578,7 @@ function renderFleet(){
   $('fIn').textContent=fleet.filter(v=>insideV(v)).length;
   $('fleet').innerHTML=items.length?items.map(v=>{
     const on=!!insideV(v), s=sel.has(v.id);
-    return `<div class="cw"><div class="cact"><button class="ci" ${on?'disabled':''} onclick="cardIn('${v.id}')">ВЪЕЗД</button><button class="co" ${on?'':'disabled'} onclick="cardOut('${v.id}')">ВЫЕЗД</button></div>
+    return `<div class="cw"><div class="cact">${on?`<button class="co" onclick="cardOut('${v.id}')">ВЫЕЗД</button>`:`<button class="ci" onclick="cardIn('${v.id}')">ВЪЕЗД</button>`}</div>
     <div class="car ${s?'sel':''} ${on?'in':''} ${openId===v.id?'open':''}" data-id="${v.id}"${brandStyle(v.brand)} onclick="togSel('${v.id}')">
       <div class="chk">${s?'✓':''}</div>
       <div class="pl">${esc(v.plate)}</div>
