@@ -128,7 +128,7 @@
   .car{background:var(--card);border-radius:12px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;border:1px solid var(--bc,transparent);cursor:pointer;position:relative;z-index:1;touch-action:pan-y;transition:transform .2s ease}
   .cw{position:relative;margin-bottom:8px;border-radius:12px;overflow:hidden}
   .cact{position:absolute;left:0;right:0;top:0;bottom:0;display:flex}
-  .cact button{flex:1;border:0;color:#fff;font-size:15px;font-weight:800;letter-spacing:.3px;text-align:right;padding:0 22px 0 0;pointer-events:none;transition:filter .12s}
+  .cact button{flex:1;border:0;color:#fff;font-size:15px;font-weight:800;letter-spacing:.3px;text-align:left;padding:0 0 0 22px;pointer-events:none;transition:filter .12s}
   .cw.ready .cact button{filter:brightness(1.12) saturate(1.2)}
   .cact .ci{background:var(--in)} .cact .co{background:var(--out)}
   .cact button:disabled{opacity:.35}
@@ -180,7 +180,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
-    <div class="ver">Версия 27</div>
+    <div class="ver">Версия 28</div>
   </div>
 </header>
 <div class="tabs">
@@ -569,7 +569,7 @@ function cardOut(id){
   const t=Date.now();r.out=t;
   openId=null;saveLog();renderLog();renderFleet();toast('ВЫЕЗД '+norm(v.plate)+' — '+hm(t),true);
 }
-/* свайп карточки/записи влево: открывает кнопку по ситуации */
+/* свайп карточки/записи вправо: открывает кнопку по ситуации */
 function attachSwipe(listEl,sel){
   let g=null;
   listEl.addEventListener('touchstart',e=>{
@@ -582,21 +582,21 @@ function attachSwipe(listEl,sel){
     if(!g)return;
     const t=e.touches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;
     if(!g.drag){
-      if(Math.abs(dx)<10||Math.abs(dx)<Math.abs(dy)*1.3||dx>0)return;   // только влево и достаточно горизонтально
+      if(Math.abs(dx)<10||Math.abs(dx)<Math.abs(dy)*1.3||dx<0)return;   // только вправо и достаточно горизонтально
       g.drag=true;g.c.classList.add('drag');
     }
-    g.off=Math.max(-g.w,Math.min(0,dx));
+    g.off=Math.min(g.w,Math.max(0,dx));
     g.c.style.transform='translateX('+g.off+'px)';
-    g.c.parentNode.classList.toggle('ready',g.off<-g.w*0.5);
+    g.c.parentNode.classList.toggle('ready',g.off>g.w*0.5);
   },{passive:true});
   function end(){
     if(!g||!g.drag){g=null;return;}
-    const c=g.c,w=g.c.parentNode,done=g.off<-g.w*0.5;
+    const c=g.c,w=g.c.parentNode,done=g.off>g.w*0.5;
     swipedAt=Date.now();sw=null;g=null;
     c.classList.remove('drag');
     const btn=w.querySelector('.cact button');
     if(done&&btn&&!btn.disabled){
-      c.style.transform='translateX(-100%)';                     // карточка уезжает — действие выполняется сразу
+      c.style.transform='translateX(100%)';                     // карточка уезжает — действие выполняется сразу
       setTimeout(()=>btn.click(),160);
     }else{
       c.style.transform='';w.classList.remove('ready');
