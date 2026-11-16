@@ -127,8 +127,9 @@
   #fleet{flex:1;min-height:0;overflow-y:auto;padding:0 12px 12px}
   .car{background:var(--card);border-radius:12px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;border:1px solid var(--bc,transparent);cursor:pointer;position:relative;z-index:1;touch-action:pan-y;transition:transform .2s ease}
   .cw{position:relative;margin-bottom:8px;border-radius:12px;overflow:hidden}
-  .cact{position:absolute;right:0;top:0;bottom:0;width:168px;display:flex}
-  .cact button{flex:1;border:0;color:#fff;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.3px}
+  .cact{position:absolute;left:0;right:0;top:0;bottom:0;display:flex}
+  .cact button{flex:1;border:0;color:#fff;font-size:15px;font-weight:800;letter-spacing:.3px;text-align:right;padding:0 22px 0 0;pointer-events:none;transition:filter .12s}
+  .cw.ready .cact button{filter:brightness(1.12) saturate(1.2)}
   .cact .ci{background:var(--in)} .cact .co{background:var(--out)}
   .cact button:disabled{opacity:.35}
   .cact .na{background:#8a93a1;cursor:default;font-size:13px}
@@ -179,7 +180,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
-    <div class="ver">Версия 26</div>
+    <div class="ver">Версия 27</div>
   </div>
 </header>
 <div class="tabs">
@@ -570,36 +571,40 @@ function cardOut(id){
 }
 /* свайп карточки/записи влево: открывает кнопку по ситуации */
 function attachSwipe(listEl,sel){
-  const W=168;let g=null;
+  let g=null;
   listEl.addEventListener('touchstart',e=>{
     g=null;if(e.touches.length!==1)return;
     const c=e.target.closest&&e.target.closest(sel);if(!c)return;
     const t=e.touches[0];
-    g={c:c,x:t.clientX,y:t.clientY,base:c.classList.contains('open')?-W:0,drag:false,off:0};
+    g={c:c,w:c.getBoundingClientRect().width,x:t.clientX,y:t.clientY,drag:false,off:0};
   },{passive:true});
   listEl.addEventListener('touchmove',e=>{
     if(!g)return;
     const t=e.touches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;
     if(!g.drag){
-      if(Math.abs(dx)<10||Math.abs(dx)<Math.abs(dy)*1.3)return;
-      if(g.base===0&&dx>0)return;                         // закрытую карточку вправо не тянем
-      g.drag=true;
-      document.querySelectorAll('.car.open,.row.open').forEach(o=>{if(o!==g.c)o.classList.remove('open');});
-      g.c.classList.add('drag');
+      if(Math.abs(dx)<10||Math.abs(dx)<Math.abs(dy)*1.3||dx>0)return;   // только влево и достаточно горизонтально
+      g.drag=true;g.c.classList.add('drag');
     }
-    g.off=Math.max(-W,Math.min(0,g.base+dx));
+    g.off=Math.max(-g.w,Math.min(0,dx));
     g.c.style.transform='translateX('+g.off+'px)';
+    g.c.parentNode.classList.toggle('ready',g.off<-g.w*0.5);
   },{passive:true});
   function end(){
     if(!g||!g.drag){g=null;return;}
-    const open=g.off<-W/2;
-    g.c.classList.remove('drag');g.c.style.transform='';
-    g.c.classList.toggle('open',open);
-    openId=open?g.c.dataset.id:null;
-    swipedAt=Date.now();sw=null;g=null;                   // не считать это свайпом вкладок
+    const c=g.c,w=g.c.parentNode,done=g.off<-g.w*0.5;
+    swipedAt=Date.now();sw=null;g=null;
+    c.classList.remove('drag');
+    const btn=w.querySelector('.cact button');
+    if(done&&btn&&!btn.disabled){
+      c.style.transform='translateX(-100%)';                     // карточка уезжает — действие выполняется сразу
+      setTimeout(()=>btn.click(),160);
+    }else{
+      c.style.transform='';w.classList.remove('ready');
+      if(done&&btn&&btn.disabled)toast('Уже на территории');
+    }
   }
   listEl.addEventListener('touchend',end,{passive:true});
-  listEl.addEventListener('touchcancel',end,{passive:true});
+  listEl.addEventListener('touchcancel',()=>{if(g&&g.drag){g.c.classList.remove('drag');g.c.style.transform='';g.c.parentNode.classList.remove('ready');}g=null;},{passive:true});
 }
 attachSwipe(document.getElementById('fleet'),'.car');
 attachSwipe(document.getElementById('list'),'.row');
