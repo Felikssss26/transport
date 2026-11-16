@@ -180,7 +180,7 @@
     <button id="bFSave">💾 Сохранить базу авто в файл</button>
     <button id="bFLoad">📂 Загрузить базу авто из файла</button>
     <button id="bClear" class="clr">🗑 Очистить день</button>
-    <div class="ver">Версия 28</div>
+    <div class="ver">Версия 29</div>
   </div>
 </header>
 <div class="tabs">
@@ -785,8 +785,26 @@ $('kbBtn').onclick=showPanel;
   panelEl.addEventListener('touchcancel',end,{passive:true});
 })();
 
-/* вкладки переключаются только кнопками; горизонтальный свайп — только для действий записей */
+/* переключение вкладок свайпом справа налево — по кругу: Журнал → Автопарк → Журнал.
+   Свайп вправо по записи/карточке — действие (въезд/выезд), он сюда не попадает. */
 let sw=null;
+document.addEventListener('touchstart',e=>{
+  sw=null;
+  if(e.touches.length!==1)return;
+  const t=e.touches[0],tg=e.target;
+  if(t.clientX>window.innerWidth-24)return;                               // правый край — жест «назад» системы
+  if($('modal').classList.contains('on')||$('choose').classList.contains('on'))return;
+  if(tg.closest&&(tg.closest('#sug')||tg.closest('input')||tg.closest('.menu')))return;   // там свой горизонтальный жест/ввод
+  sw={x:t.clientX,y:t.clientY,t:Date.now()};
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!sw)return;
+  const t=e.changedTouches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y,dt=Date.now()-sw.t;
+  sw=null;
+  if(dt>700||dx>-70||Math.abs(dx)<Math.abs(dy)*1.7)return;               // только влево
+  show(curView==='log'?'fleet':'log');
+},{passive:true});
+document.addEventListener('touchcancel',()=>{sw=null;},{passive:true});
 $('mBtn').onclick=e=>{e.stopPropagation();$('menu').classList.toggle('open');};
 document.addEventListener('click',e=>{if(!$('menu').contains(e.target))$('menu').classList.remove('open');});
 $('menu').addEventListener('click',()=>$('menu').classList.remove('open'));
